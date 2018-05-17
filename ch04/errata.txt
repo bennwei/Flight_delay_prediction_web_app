@@ -1,0 +1,13 @@
+db.on_time_performance.findOne({Carrier: 'DL', FlightDate: '2015-01-01', FlightNum: 478})
+should be:
+db.on_time_performance.findOne({Carrier: 'DL', FlightDate: '2015-01-01', FlightNum: '478'})
+
+flight = client.agile_data_science.on_time_performance.find_one
+shoud be:
+flight = client.agile_data_science.on_time_performance.find (both works)
+
+'FlightNum': int(flight_num)
+should be:
+'FlightNum': flight_num
+
+On ch04/web/on_time_flask_template.py.

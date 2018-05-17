@@ -1,0 +1,52 @@
+{
+  "airplane" : {
+    "properties" : {
+      "Owner" : {
+        "type":     "string",
+        "analyzer": "english",
+        "fields": {
+          "raw": {
+              "type":  "string",
+              "index": "not_analyzed"
+          }
+        }
+      },
+      "TailNum": {
+        "type": "string",
+        "analyzer": "english"
+      },
+      "EngineManufacturer": {
+        "type": "string",
+        "analyzer": "english"
+      },
+      "EngineModel": {
+        "type": "string",
+        "analyzer": "english"
+      },
+      "Manufacturer": {
+        "type": "string",
+        "analyzer": "english"
+      },
+      "ManufacturerYear": {
+        "type": "string",
+        "analyzer": "english"
+      },
+      "Model": {
+        "type": "string",
+        "analyzer": "english"
+      },
+      "Owner": {
+        "type": "string",
+        "analyzer": "english"
+      },
+      "OwnerState": {
+        "type": "string",
+        "analyzer": "english"
+      },
+      "SerialNumber": {
+        "type": "string",
+        "analyzer": "english"
+      }
+    }
+  }
+}

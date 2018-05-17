@@ -1,0 +1,14 @@
+data
+.git
+spark
+hadoop
+elasticsearch
+kafka
+mongodb
+mongo-hadoop
+spark-warehouse
+tmp
+zeppelin
+elasticsearch-hadoop
+models
+lib

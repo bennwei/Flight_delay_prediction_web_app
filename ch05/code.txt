@@ -1,0 +1,11 @@
+db.flights_by_month.find().forEach( function(obj) {
+    obj.Month = new NumberInt(obj.Month);
+    db.flights_by_month.save(obj);
+});
+
+db.flights_by_month.find().forEach( function(obj) {
+    obj.Year = new NumberInt(obj.Year);
+    db.flights_by_month.save(obj);
+});
+
+http://localhost:5000/total_flights

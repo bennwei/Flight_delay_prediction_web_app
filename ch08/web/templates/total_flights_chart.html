@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+{% block body %}
+<style>
+
+.chart rect {
+  fill: steelblue;
+}
+
+.chart text {
+  fill: white;
+  font: 10px sans-serif;
+  text-anchor: middle;
+}
+
+</style>
+  
+  <div>
+    <p class="lead">Total Flights by Month</p>
+    <div id="chart"><svg class="chart"></svg></div>
+  </div>
+  <script src="/static/app.js"></script>
+  <script>
+
+  </script>
+{% endblock %}

@@ -1,0 +1,573 @@
+Last login: Mon Aug 14 18:39:20 2017 from 10.0.2.2
+vagrant@precise64:~$ cd Agile_Data_Code_2
+vagrant@precise64:~/Agile_Data_Code_2$ PYSPARK_DRIVER_PYTHON=ipython pyspark
+Python 3.5.3 |Continuum Analytics, Inc.| (default, Mar  6 2017, 11:58:13)
+[GCC 4.4.7 20120313 (Red Hat 4.4.7-1)] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+17/08/15 00:03:49 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+17/08/15 00:03:49 WARN Utils: Your hostname, precise64 resolves to a loopback address: 127.0.1.1; using 10.0.2.15 instead (on interface eth0)
+17/08/15 00:03:49 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address
+Welcome to
+      ____              __
+     / __/__  ___ _____/ /__
+    _\ \/ _ \/ _ `/ __/  '_/
+   /__ / .__/\_,_/_/ /_/\_\   version 2.1.0
+      /_/
+
+Using Python version 3.5.3 (default, Mar  6 2017 11:58:13)
+SparkSession available as 'spark'.
+>>> on_time_dataframe = spark.read.parquet('data/on_time_performance.parquet')
+SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+SLF4J: Defaulting to no-operation (NOP) logger implementation
+SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+>>> on_time_dataframe.registerTempTable("on_time_performance")
+>>>
+>>> total_flights = on_time_dataframe.count()
+17/08/15 00:05:29 WARN Utils: Truncated the string representation of a plan since it was too large. This behavior can be adjusted by setting 'spark.debug.maxToStringFields' in SparkEnv.conf.
+>>> total_flights
+5819079
+>>> # Flights that were late leaving...
+...
+>>> late_departures = on_time_dataframe.filter(on_time_dataframe.DepDelayMinutes > 0)
+>>>
+>>> total_late_departures = late_departures.count()
+>>>
+>>> >>>
+  File "<stdin>", line 1
+    >>>
+     ^
+SyntaxError: invalid syntax
+>>> # Flights that were late arriving...
+...
+>>> late_arrivals = on_time_dataframe.filter(on_time_dataframe.ArrDelayMinutes > 0)
+>>> total_late_arrivals = late_arrivals.count()
+>>> # Flights that left late but made up time to arrive on time...
+...
+>>> on_time_heros = on_time_dataframe.filter(
+...   (on_time_dataframe.DepDelayMinutes > 0)
+...   &
+...   (on_time_dataframe.ArrDelayMinutes <= 0)
+... )
+>>> total_on_time_heros = on_time_heros.count()
+>>> # Get the percentage of flights that are late, rounded to 1 decimal place
+...
+>>>
+>>>
+>>>
+>>> pct_late = round((total_late_arrivals / (total_flights * 1.0)) * 100, 1)
+>>> print("Total flights:   {:,}".format(total_flights))
+Total flights:   5,819,079
+>>> print("Late departures: {:,}".format(total_late_departures))
+Late departures: 2,125,618
+>>> print("Late arrivals:   {:,}".format(total_late_arrivals))
+Late arrivals:   2,086,896
+>>> print("Recoveries:      {:,}".format(total_on_time_heros))
+Recoveries:      606,902
+>>> print("Percentage Late: {}%".format(pct_late))
+Percentage Late: 35.9%
+>>> # Get the average minutes late departing and arriving
+...
+>>> spark.sql("""
+... SELECT
+...   ROUND(AVG(DepDelay),1) AS AvgDepDelay,
+...   ROUND(AVG(ArrDelay),1) AS AvgArrDelay
+... FROM on_time_performance
+... """
+... ).show()
++-----------+-----------+
+|AvgDepDelay|AvgArrDelay|
++-----------+-----------+
+|        9.4|        4.4|
++-----------+-----------+
+
+>>> # Why are flights late? Lets look at some delayed flights and the delay causes
+...
+>>> late_flights = spark.sql("""
+... SELECT
+...   ArrDelayMinutes,
+...   WeatherDelay,
+...   CarrierDelay,
+...   NASDelay,
+...   SecurityDelay,
+...   LateAircraftDelay
+... FROM
+...   on_time_performance
+... WHERE
+...   WeatherDelay IS NOT NULL
+...   OR
+...   CarrierDelay IS NOT NULL
+...   OR
+...   NASDelay IS NOT NULL
+...   OR
+...   SecurityDelay IS NOT NULL
+...   OR
+...   LateAircraftDelay IS NOT NULL
+... ORDER BY
+...   FlightDate
+... """)
+>>> late_flights.sample(False, 0.01).show()
++---------------+------------+------------+--------+-------------+-----------------+
+|ArrDelayMinutes|WeatherDelay|CarrierDelay|NASDelay|SecurityDelay|LateAircraftDelay|
++---------------+------------+------------+--------+-------------+-----------------+
+|           78.0|         0.0|        78.0|     0.0|          0.0|              0.0|
+|           21.0|         0.0|         0.0|    21.0|          0.0|              0.0|
+|           20.0|         0.0|        16.0|     4.0|          0.0|              0.0|
+|           27.0|         0.0|        27.0|     0.0|          0.0|              0.0|
+|           30.0|         0.0|        15.0|    15.0|          0.0|              0.0|
+|           54.0|         0.0|        54.0|     0.0|          0.0|              0.0|
+|           45.0|         0.0|        45.0|     0.0|          0.0|              0.0|
+|          113.0|         0.0|        12.0|     0.0|          0.0|            101.0|
+|           69.0|         0.0|         0.0|     0.0|          0.0|             69.0|
+|           16.0|         0.0|        16.0|     0.0|          0.0|              0.0|
+|           73.0|         0.0|        16.0|     0.0|          0.0|             57.0|
+|           59.0|         0.0|        27.0|    32.0|          0.0|              0.0|
+|           23.0|         0.0|         9.0|    14.0|          0.0|              0.0|
+|           46.0|         0.0|         0.0|    38.0|          0.0|              8.0|
+|           52.0|         0.0|         1.0|    51.0|          0.0|              0.0|
+|           43.0|         0.0|        43.0|     0.0|          0.0|              0.0|
+|           31.0|         0.0|         0.0|    31.0|          0.0|              0.0|
+|          111.0|         0.0|         0.0|     0.0|          0.0|            111.0|
+|           24.0|         0.0|         0.0|     5.0|          0.0|             19.0|
+|           39.0|         0.0|         0.0|     0.0|          0.0|             39.0|
++---------------+------------+------------+--------+-------------+-----------------+
+only showing top 20 rows
+
+>>> # Calculate the percentage contribution to delay for each source
+...
+>>> total_delays = spark.sql("""
+... SELECT
+...   ROUND(SUM(WeatherDelay)/SUM(ArrDelayMinutes) * 100, 1) AS pct_weather_delay,
+...   ROUND(SUM(CarrierDelay)/SUM(ArrDelayMinutes) * 100, 1) AS pct_carrier_delay,
+...   ROUND(SUM(NASDelay)/SUM(ArrDelayMinutes) * 100, 1) AS pct_nas_delay,
+...   ROUND(SUM(SecurityDelay)/SUM(ArrDelayMinutes) * 100, 1) AS pct_security_delay,
+...   ROUND(SUM(LateAircraftDelay)/SUM(ArrDelayMinutes) * 100, 1) AS pct_late_aircraft_delay
+... FROM on_time_performance
+... """)
+>>> total_delays.show()
++-----------------+-----------------+-------------+------------------+-----------------------+
+|pct_weather_delay|pct_carrier_delay|pct_nas_delay|pct_security_delay|pct_late_aircraft_delay|
++-----------------+-----------------+-------------+------------------+-----------------------+
+|              4.5|             29.2|         20.7|               0.1|                   36.1|
++-----------------+-----------------+-------------+------------------+-----------------------+
+
+>>> weather_delay_histogram = on_time_dataframe\
+...   .select("WeatherDelay")\
+...   .rdd\
+...   .flatMap(lambda x: x)\
+...   .histogram(10)
+>>> print("{}\n{}".format(weather_delay_histogram[0], weather_delay_histogram[1]))
+[0.0, 121.1, 242.2, 363.29999999999995, 484.4, 605.5, 726.5999999999999, 847.6999999999999, 968.8, 1089.8999999999999, 1211.0]
+[1057655, 4477, 873, 216, 94, 55, 29, 20, 15, 5]
+>>> # Eyeball the first to define our buckets
+...
+>>>
+Traceback (most recent call last):
+  File "/home/vagrant/spark/python/pyspark/context.py", line 236, in signal_handler
+    raise KeyboardInterrupt()
+KeyboardInterrupt
+>>> weather_delay_histogram = on_time_dataframe\
+...   .select("WeatherDelay")\
+...   .rdd\
+...   .flatMap(lambda x: x)\
+...   .histogram([1, 15, 30, 60, 120, 240, 480, 720, 24*60.0])
+>>> print(weather_delay_histogram)
+([1, 15, 30, 60, 120, 240, 480, 720, 1440.0], [19740, 16007, 13569, 9442, 4598, 1136, 152, 72])
+>>> record = {'key': 1, 'data': []}
+>>> for label, count in zip(weather_delay_histogram[0], weather_delay_histogram[1]):
+...   record['data'].append(
+...     {
+...       'label': label,
+...       'count': count
+...     }
+...   )
+...
+>>> # Save to Mongo directly, since this is a Tuple not a dataframe or RDD
+...
+>>> from pymongo import MongoClient
+>>> client = MongoClient()
+>>> client.relato.weather_delay_histogram.insert_one(record)
+<pymongo.results.InsertOneResult object at 0x7fbae56f1a68>
+>>> def histogram_to_publishable(histogram):
+...   record = {'key': 1, 'data': []}
+...   for label, value in zip(histogram[0], histogram[1]):
+...     record['data'].append(
+...       {
+...         'label': label,
+...         'value': value
+...       }
+...     )
+...   return record
+...
+>>> # Recompute the weather histogram with a filter for on-time flights
+... weather_delay_histogram = on_time_dataframe\
+...   .filter(
+...     (on_time_dataframe.WeatherDelay != None)
+...     &
+...     (on_time_dataframe.WeatherDelay > 0)
+...   )\
+...   .select("WeatherDelay")\
+...   .rdd\
+...   .flatMap(lambda x: x)\
+...   .histogram([0, 15, 30, 60, 120, 240, 480, 720, 24*60.0])
+>>> print(weather_delay_histogram)
+([0, 15, 30, 60, 120, 240, 480, 720, 1440.0], [0, 0, 0, 0, 0, 0, 0, 0])
+>>> record = histogram_to_publishable(weather_delay_histogram)
+>>> # Get rid of the old stuff and put the new stuff in its place
+... client.relato.weather_delay_histogram.drop()
+>>> client.relato.weather_delay_histogram.insert_one(record)
+<pymongo.results.InsertOneResult object at 0x7fbae56f1dc8>
+>>>
+>>>
+
+>>> import sys, os, re
+>>> import iso8601
+>>> import datetime
+>>> # Select a few features of interest
+... simple_on_time_features = spark.sql("""
+... SELECT
+...   FlightNum,
+...   FlightDate,
+...   DayOfWeek,
+...   DayofMonth AS DayOfMonth,
+...   CONCAT(Month, '-',  DayofMonth) AS DayOfYear,
+...   Carrier,
+...   Origin,
+...   Dest,
+...   Distance,
+...   DepDelay,
+...   ArrDelay,
+...   CRSDepTime,
+...   CRSArrTime
+... FROM on_time_performance
+... """)
+>>> simple_on_time_features.show()
++---------+----------+---------+----------+---------+-------+------+----+--------+--------+--------+----------+----------+
+|FlightNum|FlightDate|DayOfWeek|DayOfMonth|DayOfYear|Carrier|Origin|Dest|Distance|DepDelay|ArrDelay|CRSDepTime|CRSArrTime|
++---------+----------+---------+----------+---------+-------+------+----+--------+--------+--------+----------+----------+
+|     1519|2015-01-01|        4|         1|      1-1|     AA|   DFW| MEM|   432.0|    -3.0|    -6.0|      1345|      1510|
+|     1519|2015-01-01|        4|         1|      1-1|     AA|   MEM| DFW|   432.0|    -4.0|    -9.0|      1550|      1730|
+|     2349|2015-01-01|        4|         1|      1-1|     AA|   ORD| DFW|   802.0|     0.0|    26.0|      1845|      2115|
+|     1298|2015-01-01|        4|         1|      1-1|     AA|   DFW| ATL|   731.0|   100.0|   112.0|      1820|      2120|
+|     1422|2015-01-01|        4|         1|      1-1|     AA|   DFW| HDN|   769.0|    78.0|    78.0|      0800|      0925|
+|     1422|2015-01-01|        4|         1|      1-1|     AA|   HDN| DFW|   769.0|   332.0|   336.0|      1005|      1320|
+|     2287|2015-01-01|        4|         1|      1-1|     AA|   JAC| DFW|  1047.0|    -4.0|    21.0|      0800|      1200|
+|     1080|2015-01-01|        4|         1|      1-1|     AA|   EGE| ORD|  1007.0|    null|    null|      1415|      1755|
+|     1080|2015-01-01|        4|         1|      1-1|     AA|   ORD| EGE|  1007.0|    null|    null|      1145|      1335|
+|     2332|2015-01-01|        4|         1|      1-1|     AA|   DFW| ORD|   802.0|    null|    null|      0740|      0955|
+|      194|2015-01-01|        4|         1|      1-1|     AA|   DFW| ATL|   731.0|    null|    null|      1150|      1445|
+|      356|2015-01-01|        4|         1|      1-1|     AA|   ATL| DFW|   731.0|    -5.0|     1.0|      1640|      1805|
+|      356|2015-01-01|        4|         1|      1-1|     AA|   DFW| ATL|   731.0|    -4.0|   -11.0|      1300|      1600|
+|     2396|2015-01-01|        4|         1|      1-1|     AA|   DFW| ATL|   731.0|    76.0|    86.0|      1955|      2250|
+|     1513|2015-01-01|        4|         1|      1-1|     AA|   ATL| DFW|   731.0|    -2.0|    -7.0|      1045|      1215|
+|     1513|2015-01-01|        4|         1|      1-1|     AA|   DFW| ATL|   731.0|    -5.0|   -25.0|      0700|      1005|
+|      937|2015-01-01|        4|         1|      1-1|     AA|   DFW| EGE|   721.0|    35.0|    17.0|      1600|      1720|
+|      937|2015-01-01|        4|         1|      1-1|     AA|   EGE| LAX|   748.0|    10.0|   -12.0|      1805|      1920|
+|     1212|2015-01-01|        4|         1|      1-1|     AA|   DFW| SDF|   733.0|    null|    null|      1145|      1440|
+|     1212|2015-01-01|        4|         1|      1-1|     AA|   SDF| DFW|   733.0|    null|    null|      1520|      1640|
++---------+----------+---------+----------+---------+-------+------+----+--------+--------+--------+----------+----------+
+only showing top 20 rows
+
+>>> # Filter nulls, they can't help us
+... filled_on_time_features = simple_on_time_features.filter(
+...   simple_on_time_features.ArrDelay.isNotNull()
+...   &
+...   simple_on_time_features.DepDelay.isNotNull()
+... )
+>>> # We need to turn timestamps into timestamps, and not strings or numbers
+... def convert_hours(hours_minutes):
+...   hours = hours_minutes[:-2]
+...   minutes = hours_minutes[-2:]
+...
+...   if hours == '24':
+...     hours = '23'
+...     minutes = '59'
+...
+...   time_string = "{}:{}:00Z".format(hours, minutes)
+...   return time_string
+...
+>>> def compose_datetime(iso_date, time_string):
+...   return "{} {}".format(iso_date, time_string)
+...
+>>> def create_iso_string(iso_date, hours_minutes):
+...   time_string = convert_hours(hours_minutes)
+...   full_datetime = compose_datetime(iso_date, time_string)
+...   return full_datetime
+...
+>>> ef create_datetime(iso_string):
+  File "<stdin>", line 1
+    ef create_datetime(iso_string):
+                     ^
+SyntaxError: invalid syntax
+>>> def create_datetime(iso_string):
+...   return iso8601.parse_date(iso_string)
+...
+>>> def convert_datetime(iso_date, hours_minutes):
+...   iso_string = create_iso_string(iso_date, hours_minutes)
+...   dt = create_datetime(iso_string)
+...   return dt
+...
+>>> def day_of_year(iso_date_string):
+...   dt = iso8601.parse_date(iso_date_string)
+...   doy = dt.timetuple().tm_yday
+...   return doy
+...
+>>> def alter_feature_datetimes(row):
+...
+...   flight_date = iso8601.parse_date(row['FlightDate'])
+...   scheduled_dep_time = convert_datetime(row['FlightDate'], row['CRSDepTime'])
+...   scheduled_arr_time = convert_datetime(row['FlightDate'], row['CRSArrTime'])
+...
+...   # Handle overnight flights
+...   if scheduled_arr_time < scheduled_dep_time:
+...     scheduled_arr_time += datetime.timedelta(days=1)
+...
+...   doy = day_of_year(row['FlightDate'])
+...
+...   return {
+...     'FlightNum': row['FlightNum'],
+...     'FlightDate': flight_date,
+...     'DayOfWeek': int(row['DayOfWeek']),
+...     'DayOfMonth': int(row['DayOfMonth']),
+...     'DayOfYear': doy,
+...     'Carrier': row['Carrier'],
+...     'Origin': row['Origin'],
+...     'Dest': row['Dest'],
+...     'Distance': row['Distance'],
+...     'DepDelay': row['DepDelay'],
+...     'ArrDelay': row['ArrDelay'],
+...     'CRSDepTime': scheduled_dep_time,
+...     'CRSArrTime': scheduled_arr_time,
+...   }
+...
+>>> timestamp_features = filled_on_time_features.rdd.map(alter_feature_datetimes)
+>>> timestamp_df = timestamp_features.toDF()
+/home/vagrant/spark/python/pyspark/sql/session.py:336: UserWarning: Using RDD of dict to inferSchema is deprecated. Use pyspark.sql.Row instead
+  warnings.warn("Using RDD of dict to inferSchema is deprecated. "
+>>> sorted_features = timestamp_df.sort(
+...   timestamp_df.DayOfYear,
+...   timestamp_df.Carrier,
+...   timestamp_df.Origin,
+...   timestamp_df.Dest,
+...   timestamp_df.FlightNum,
+...   timestamp_df.CRSDepTime,
+...   timestamp_df.CRSArrTime,
+... )
+>>>
+>>> # Store as a single json file and bzip2 it
+... sorted_features.repartition(1).write.mode("overwrite").json("data/simple_flight_delay_features.json")
+>>> os.system("cp data/simple_flight_delay_features.json/part* data/simple_flight_delay_features.jsonl")
+0
+>>> os.system("bzip2 --best data/simple_flight_delay_features.jsonl")
+0
+>>>
+vagrant@precise64:~/Agile_Data_Code_2$ bzcat data/simple_flight_delay_features.jsonl.bz2 | head -5
+{"ArrDelay":13.0,"CRSArrTime":"2015-01-01T18:10:00.000Z","CRSDepTime":"2015-01-01T15:30:00.000Z","Carrier":"AA","DayOfMonth":1,"DayOfWeek":4,"DayOfYear":1,"DepDelay":14.0,"Dest":"DFW","Distance":569.0,"FlightDate":"2015-01-01T00:00:00.000Z","FlightNum":"1024","Origin":"ABQ"}
+{"ArrDelay":17.0,"CRSArrTime":"2015-01-01T10:15:00.000Z","CRSDepTime":"2015-01-01T07:25:00.000Z","Carrier":"AA","DayOfMonth":1,"DayOfWeek":4,"DayOfYear":1,"DepDelay":14.0,"Dest":"DFW","Distance":569.0,"FlightDate":"2015-01-01T00:00:00.000Z","FlightNum":"1184","Origin":"ABQ"}
+{"ArrDelay":36.0,"CRSArrTime":"2015-01-01T11:45:00.000Z","CRSDepTime":"2015-01-01T09:00:00.000Z","Carrier":"AA","DayOfMonth":1,"DayOfWeek":4,"DayOfYear":1,"DepDelay":-2.0,"Dest":"DFW","Distance":569.0,"FlightDate":"2015-01-01T00:00:00.000Z","FlightNum":"336","Origin":"ABQ"}
+{"ArrDelay":-21.0,"CRSArrTime":"2015-01-01T19:30:00.000Z","CRSDepTime":"2015-01-01T17:55:00.000Z","Carrier":"AA","DayOfMonth":1,"DayOfWeek":4,"DayOfYear":1,"DepDelay":-1.0,"Dest":"DFW","Distance":731.0,"FlightDate":"2015-01-01T00:00:00.000Z","FlightNum":"125","Origin":"ATL"}
+{"ArrDelay":-14.0,"CRSArrTime":"2015-01-01T10:25:00.000Z","CRSDepTime":"2015-01-01T08:55:00.000Z","Carrier":"AA","DayOfMonth":1,"DayOfWeek":4,"DayOfYear":1,"DepDelay":-4.0,"Dest":"DFW","Distance":731.0,"FlightDate":"2015-01-01T00:00:00.000Z","FlightNum":"1455","Origin":"ATL"}
+
+Using Python version 3.5.3 (default, Mar  6 2017 11:58:13)
+SparkSession available as 'spark'.
+>>> from pyspark.sql.types import StringType, IntegerType, FloatType, DoubleType, DateType, TimestampType
+>>> from pyspark.sql.types import StructType, StructField
+>>> schema = StructType([
+...   StructField("ArrDelay", DoubleType(), True),     # "ArrDelay":5.0
+...   StructField("CRSArrTime", TimestampType(), True),    # "CRSArrTime":"2015-12-31T03:20:00.000-08:00"
+...   StructField("CRSDepTime", TimestampType(), True),    # "CRSDepTime":"2015-12-31T03:05:00.000-08:00"
+...   StructField("Carrier", StringType(), True),     # "Carrier":"WN"
+...   StructField("DayOfMonth", IntegerType(), True), # "DayOfMonth":31
+...   StructField("DayOfWeek", IntegerType(), True),  # "DayOfWeek":4
+...   StructField("DayOfYear", IntegerType(), True),  # "DayOfYear":365
+...   StructField("DepDelay", DoubleType(), True),     # "DepDelay":14.0
+...   StructField("Dest", StringType(), True),        # "Dest":"SAN"
+...   StructField("Distance", DoubleType(), True),     # "Distance":368.0
+...   StructField("FlightDate", DateType(), True),    # "FlightDate":"2015-12-30T16:00:00.000-08:00"
+...   StructField("FlightNum", StringType(), True),   # "FlightNum":"6109"
+...   StructField("Origin", StringType(), True),      # "Origin":"TUS"
+... ])
+>>> features = spark.read.json(
+...   "data/simple_flight_delay_features.jsonl.bz2",
+...   schema=schema
+... )
+>>> features.first()
+Row(ArrDelay=13.0, CRSArrTime=datetime.datetime(2015, 1, 1, 18, 10), CRSDepTime=datetime.datetime(2015, 1, 1, 15, 30), Carrier='AA', DayOfMonth=1, DayOfWeek=4, DayOfYear=1, DepDelay=14.0, Dest='DFW', Distance=569.0, FlightDate=datetime.date(2015, 1, 1), FlightNum='1024', Origin='ABQ')
+>>> #
+... # Check for nulls in features before using Spark ML
+... #
+...
+>>> null_counts = [(column, features.where(features[column].isNull()).count()) for column in features.columns]
+>>> type(null_counts)
+<class 'list'>
+>>> null_counts[0:10]
+[('ArrDelay', 0), ('CRSArrTime', 0), ('CRSDepTime', 0), ('Carrier', 0), ('DayOfMonth', 0), ('DayOfWeek', 0), ('DayOfYear', 0), ('DepDelay', 0), ('Dest', 0), ('Distance', 0)]
+>>> cols_with_nulls = filter(lambda x: x[1] > 0, null_counts)
+>>> print(list(cols_with_nulls))
+[]
+>>> #
+... # Add a Route variable to replace FlightNum
+... #
+...
+>>> from pyspark.sql.functions import lit, concat
+>>> features_with_route = features.withColumn(
+...   'Route',
+...   concat(
+...     features.Origin,
+...     lit('-'),
+...     features.Dest
+...   )
+... )
+>>> features_with_route.select("Origin", "Dest", "Route").show(5)
++------+----+-------+
+|Origin|Dest|  Route|
++------+----+-------+
+|   ABQ| DFW|ABQ-DFW|
+|   ABQ| DFW|ABQ-DFW|
+|   ABQ| DFW|ABQ-DFW|
+|   ATL| DFW|ATL-DFW|
+|   ATL| DFW|ATL-DFW|
++------+----+-------+
+only showing top 5 rows
+_____________________________________________________________________
+>>> #
+... # Use pysmark.ml.feature.Bucketizer to bucketize ArrDelay
+... #
+... from pyspark.ml.feature import Bucketizer
+>>> splits = [-float("inf"), -15.0, 0, 30.0, float("inf")]
+>>> bucketizer = Bucketizer(
+...   splits=splits,
+...   inputCol="ArrDelay",
+...   outputCol="ArrDelayBucket"
+... )
+>>> ml_bucketized_features = bucketizer.transform(features_with_route)
+>>> # Check the buckets out
+... ml_bucketized_features.select("ArrDelay", "ArrDelayBucket").show()
++--------+--------------+
+|ArrDelay|ArrDelayBucket|
++--------+--------------+
+|    13.0|           2.0|
+|    17.0|           2.0|
+|    36.0|           3.0|
+|   -21.0|           0.0|
+|   -14.0|           1.0|
+|    16.0|           2.0|
+|    -7.0|           1.0|
+|    13.0|           2.0|
+|    25.0|           2.0|
+|    58.0|           3.0|
+|    14.0|           2.0|
+|     1.0|           2.0|
+|   -29.0|           0.0|
+|   -10.0|           1.0|
+|    -3.0|           1.0|
+|    -8.0|           1.0|
+|    -1.0|           1.0|
+|   -14.0|           1.0|
+|   -16.0|           0.0|
+|    18.0|           2.0|
++--------+--------------+
+only showing top 20 rows
+
+>>> from pyspark.ml.feature import StringIndexer, VectorAssembler
+>>> for column in ["Carrier", "DayOfMonth", "DayOfWeek", "DayOfYear",
+...                "Origin", "Dest", "Route"]:
+...   string_indexer = StringIndexer(
+...     inputCol=column,
+...     outputCol=column + "_index"
+...   )
+...   ml_bucketized_features = string_indexer.fit(ml_bucketized_features)\
+...                                           .transform(ml_bucketized_features)
+...
+>>> # Check out the indexes
+... ml_bucketized_features.show(6)
++--------+--------------------+--------------------+-------+----------+---------+---------+--------+----+--------+----------+---------+------+-------+--------------+-------------+----------------+---------------+---------------+------------+----------+-----------+
+|ArrDelay|          CRSArrTime|          CRSDepTime|Carrier|DayOfMonth|DayOfWeek|DayOfYear|DepDelay|Dest|Distance|FlightDate|FlightNum|Origin|  Route|ArrDelayBucket|Carrier_index|DayOfMonth_index|DayOfWeek_index|DayOfYear_index|Origin_index|Dest_index|Route_index|
++--------+--------------------+--------------------+-------+----------+---------+---------+--------+----+--------+----------+---------+------+-------+--------------+-------------+----------------+---------------+---------------+------------+----------+-----------+
+|    13.0|2015-01-01 18:10:...|2015-01-01 15:30:...|     AA|         1|        4|        1|    14.0| DFW|   569.0|2015-01-01|     1024|   ABQ|ABQ-DFW|           2.0|          2.0|            25.0|            0.0|          320.0|        53.0|       2.0|      938.0|
+|    17.0|2015-01-01 10:15:...|2015-01-01 07:25:...|     AA|         1|        4|        1|    14.0| DFW|   569.0|2015-01-01|     1184|   ABQ|ABQ-DFW|           2.0|          2.0|            25.0|            0.0|          320.0|        53.0|       2.0|      938.0|
+|    36.0|2015-01-01 11:45:...|2015-01-01 09:00:...|     AA|         1|        4|        1|    -2.0| DFW|   569.0|2015-01-01|      336|   ABQ|ABQ-DFW|           3.0|          2.0|            25.0|            0.0|          320.0|        53.0|       2.0|      938.0|
+|   -21.0|2015-01-01 19:30:...|2015-01-01 17:55:...|     AA|         1|        4|        1|    -1.0| DFW|   731.0|2015-01-01|      125|   ATL|ATL-DFW|           0.0|          2.0|            25.0|            0.0|          320.0|         0.0|       2.0|       37.0|
+|   -14.0|2015-01-01 10:25:...|2015-01-01 08:55:...|     AA|         1|        4|        1|    -4.0| DFW|   731.0|2015-01-01|     1455|   ATL|ATL-DFW|           1.0|          2.0|            25.0|            0.0|          320.0|         0.0|       2.0|       37.0|
+|    16.0|2015-01-01 15:15:...|2015-01-01 13:45:...|     AA|         1|        4|        1|    15.0| DFW|   731.0|2015-01-01|     1473|   ATL|ATL-DFW|           2.0|          2.0|            25.0|            0.0|          320.0|         0.0|       2.0|       37.0|
++--------+--------------------+--------------------+-------+----------+---------+---------+--------+----+--------+----------+---------+------+-------+--------------+-------------+----------------+---------------+---------------+------------+----------+-----------+
+only showing top 6 rows
+>>> # Handle continuous, numeric fields by combining them into one feature vector
+... numeric_columns = ["DepDelay", "Distance"]
+>>> index_columns = ["Carrier_index", "DayOfMonth_index",
+...                    "DayOfWeek_index", "DayOfYear_index", "Origin_index",
+...                    "Origin_index", "Dest_index", "Route_index"]
+>>> vector_assembler = VectorAssembler(
+...   inputCols=numeric_columns + index_columns,
+...   outputCol="Features_vec"
+... )
+>>> final_vectorized_features = vector_assembler.transform(ml_bucketized_features)
+>>> # Drop the index columns
+... for column in index_columns:
+...   final_vectorized_features = final_vectorized_features.drop(column)
+...
+>>> # Check out the features
+... final_vectorized_features.show()
++--------+--------------------+--------------------+-------+----------+---------+---------+--------+----+--------+----------+---------+------+-------+--------------+--------------------+
+|ArrDelay|          CRSArrTime|          CRSDepTime|Carrier|DayOfMonth|DayOfWeek|DayOfYear|DepDelay|Dest|Distance|FlightDate|FlightNum|Origin|  Route|ArrDelayBucket|        Features_vec|
++--------+--------------------+--------------------+-------+----------+---------+---------+--------+----+--------+----------+---------+------+-------+--------------+--------------------+
+|    13.0|2015-01-01 18:10:...|2015-01-01 15:30:...|     AA|         1|        4|        1|    14.0| DFW|   569.0|2015-01-01|     1024|   ABQ|ABQ-DFW|           2.0|[14.0,569.0,2.0,2...|
+|    17.0|2015-01-01 10:15:...|2015-01-01 07:25:...|     AA|         1|        4|        1|    14.0| DFW|   569.0|2015-01-01|     1184|   ABQ|ABQ-DFW|           2.0|[14.0,569.0,2.0,2...|
+|    36.0|2015-01-01 11:45:...|2015-01-01 09:00:...|     AA|         1|        4|        1|    -2.0| DFW|   569.0|2015-01-01|      336|   ABQ|ABQ-DFW|           3.0|[-2.0,569.0,2.0,2...|
+|   -21.0|2015-01-01 19:30:...|2015-01-01 17:55:...|     AA|         1|        4|        1|    -1.0| DFW|   731.0|2015-01-01|      125|   ATL|ATL-DFW|           0.0|[-1.0,731.0,2.0,2...|
+|   -14.0|2015-01-01 10:25:...|2015-01-01 08:55:...|     AA|         1|        4|        1|    -4.0| DFW|   731.0|2015-01-01|     1455|   ATL|ATL-DFW|           1.0|[-4.0,731.0,2.0,2...|
+|    16.0|2015-01-01 15:15:...|2015-01-01 13:45:...|     AA|         1|        4|        1|    15.0| DFW|   731.0|2015-01-01|     1473|   ATL|ATL-DFW|           2.0|[15.0,731.0,2.0,2...|
+|    -7.0|2015-01-01 12:15:...|2015-01-01 10:45:...|     AA|         1|        4|        1|    -2.0| DFW|   731.0|2015-01-01|     1513|   ATL|ATL-DFW|           1.0|[-2.0,731.0,2.0,2...|
+|    13.0|2015-01-01 16:50:...|2015-01-01 15:25:...|     AA|         1|        4|        1|     9.0| DFW|   731.0|2015-01-01|      194|   ATL|ATL-DFW|           2.0|[9.0,731.0,2.0,25...|
+|    25.0|2015-01-01 20:30:...|2015-01-01 19:00:...|     AA|         1|        4|        1|    -2.0| DFW|   731.0|2015-01-01|      232|   ATL|ATL-DFW|           2.0|[-2.0,731.0,2.0,2...|
+|    58.0|2015-01-01 21:40:...|2015-01-01 20:15:...|     AA|         1|        4|        1|    14.0| DFW|   731.0|2015-01-01|      276|   ATL|ATL-DFW|           3.0|[14.0,731.0,2.0,2...|
+|    14.0|2015-01-01 13:25:...|2015-01-01 11:55:...|     AA|         1|        4|        1|    15.0| DFW|   731.0|2015-01-01|      314|   ATL|ATL-DFW|           2.0|[15.0,731.0,2.0,2...|
+|     1.0|2015-01-01 18:05:...|2015-01-01 16:40:...|     AA|         1|        4|        1|    -5.0| DFW|   731.0|2015-01-01|      356|   ATL|ATL-DFW|           2.0|[-5.0,731.0,2.0,2...|
+|   -29.0|2015-01-01 10:12:...|2015-01-01 08:15:...|     AA|         1|        4|        1|    -9.0| MIA|   594.0|2015-01-01|     1652|   ATL|ATL-MIA|           0.0|[-9.0,594.0,2.0,2...|
+|   -10.0|2015-01-01 08:52:...|2015-01-01 07:00:...|     AA|         1|        4|        1|    -4.0| MIA|   594.0|2015-01-01|       17|   ATL|ATL-MIA|           1.0|[-4.0,594.0,2.0,2...|
+|    -3.0|2015-01-01 23:02:...|2015-01-01 21:10:...|     AA|         1|        4|        1|    -7.0| MIA|   594.0|2015-01-01|      349|   ATL|ATL-MIA|           1.0|[-7.0,594.0,2.0,2...|
+|    -8.0|2015-01-01 14:35:...|2015-01-01 13:30:...|     AA|         1|        4|        1|    -2.0| DFW|   190.0|2015-01-01|     1023|   AUS|AUS-DFW|           1.0|[-2.0,190.0,2.0,2...|
+|    -1.0|2015-01-01 06:50:...|2015-01-01 05:50:...|     AA|         1|        4|        1|    -2.0| DFW|   190.0|2015-01-01|     1178|   AUS|AUS-DFW|           1.0|[-2.0,190.0,2.0,2...|
+|   -14.0|2015-01-01 09:40:...|2015-01-01 08:30:...|     AA|         1|        4|        1|    -6.0| DFW|   190.0|2015-01-01|     1296|   AUS|AUS-DFW|           1.0|[-6.0,190.0,2.0,2...|
+|   -16.0|2015-01-01 10:15:...|2015-01-01 09:05:...|     AA|         1|        4|        1|    -4.0| DFW|   190.0|2015-01-01|     1356|   AUS|AUS-DFW|           0.0|[-4.0,190.0,2.0,2...|
+|    18.0|2015-01-01 16:55:...|2015-01-01 15:55:...|     AA|         1|        4|        1|     3.0| DFW|   190.0|2015-01-01|     1365|   AUS|AUS-DFW|           2.0|[3.0,190.0,2.0,25...|
++--------+--------------------+--------------------+-------+----------+---------+---------+--------+----+--------+----------+---------+------+-------+--------------+--------------------+
+only showing top 20 rows
+
+>>> # Test/train split
+... training_data, test_data = final_vectorized_features.randomSplit([0.8, 0.2])
+>>> # Instantiate and fit random forest classifier
+... from pyspark.ml.classification import RandomForestClassifier
+>>> rfc = RandomForestClassifier(featuresCol="Features_vec", labelCol="ArrDelayBucket", maxBins=4657)
+>>> model = rfc.fit(training_data)
+>>> # Evaluate model using test data
+... predictions = model.transform(test_data)
+>>> from pyspark.ml.evaluation import MulticlassClassificationEvaluator
+>>> evaluator = MulticlassClassificationEvaluator(labelCol="ArrDelayBucket", metricName="accuracy")
+>>> accuracy = evaluator.evaluate(predictions)
+>>> print("Accuracy = {}".format(accuracy))
+Accuracy = 0.5963251465794626
+>>> # Sanity check a sample
+... predictions.sample(False, 0.001, 18).orderBy("CRSDepTime").show(6)
++--------+--------------------+--------------------+-------+----------+---------+---------+--------+----+--------+----------+---------+------+-------+--------------+--------------------+--------------------+--------------------+----------+
+|ArrDelay|          CRSArrTime|          CRSDepTime|Carrier|DayOfMonth|DayOfWeek|DayOfYear|DepDelay|Dest|Distance|FlightDate|FlightNum|Origin|  Route|ArrDelayBucket|        Features_vec|       rawPrediction|         probability|prediction|
++--------+--------------------+--------------------+-------+----------+---------+---------+--------+----+--------+----------+---------+------+-------+--------------+--------------------+--------------------+--------------------+----------+
+|     5.0|2015-01-01 22:05:...|2015-01-01 21:10:...|     OO|         1|        4|        1|    -4.0| SPI|   174.0|2015-01-01|     5407|   ORD|ORD-SPI|           2.0|[-4.0,174.0,3.0,2...|[4.80938175484632...|[0.24046908774231...|       1.0|
+|    16.0|2015-01-02 10:15:...|2015-01-02 08:02:...|     OO|         2|        5|        2|    -9.0| DEN|   752.0|2015-01-02|     6394|   FCA|FCA-DEN|           2.0|[-9.0,752.0,3.0,5...|[6.41458629533540...|[0.32072931476677...|       1.0|
+|    20.0|2015-01-02 11:22:...|2015-01-02 10:22:...|     NK|         2|        5|        2|    31.0| LAS|  1055.0|2015-01-02|      469|   DFW|DFW-LAS|           2.0|[31.0,1055.0,10.0...|[1.40937820880776...|[0.07046891044038...|       2.0|
+|    -2.0|2015-01-02 21:54:...|2015-01-02 14:36:...|     UA|         2|        5|        2|     8.0| IND|  1943.0|2015-01-02|      317|   SFO|SFO-IND|           1.0|[8.0,1943.0,5.0,5...|[2.10610021980457...|[0.10530501099022...|       2.0|
+|    -9.0|2015-01-02 20:35:...|2015-01-02 17:40:...|     WN|         2|        5|        2|    -2.0| PHX|  1444.0|2015-01-02|     3491|   MDW|MDW-PHX|           1.0|[-2.0,1444.0,0.0,...|[6.04459907030010...|[0.30222995351500...|       1.0|
+|   220.0|2015-01-03 09:40:...|2015-01-03 07:30:...|     OO|         3|        6|        3|   231.0| LAX|   726.0|2015-01-03|     2593|   RDM|RDM-LAX|           3.0|[231.0,726.0,3.0,...|[0.30255177172576...|[0.01512758858628...|       3.0|
++--------+--------------------+--------------------+-------+----------+---------+---------+--------+----+--------+----------+---------+------+-------+--------------+--------------------+--------------------+--------------------+----------+
+only showing top 6 rows
+
+>>> predictions.groupBy("Prediction").count().show()
++----------+------+
+|Prediction| count|
++----------+------+
+|       0.0|  3124|
+|       1.0|830448|
+|       3.0|113902|
+|       2.0|195592|
++----------+------+

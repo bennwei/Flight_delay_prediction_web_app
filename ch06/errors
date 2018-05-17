@@ -1,0 +1,8 @@
+When try:
+http://localhost:5000/airplanes/
+http://localhost:5000/airplanes/?TailNum=&Owner=&OwnerState=&Manufacturer=BOEING&Model=&ManufacturerYear=&SerialNumber=&EngineManufacturer=&EngineModel=
+see error:
+1. elastic query not working properly with the sorting. When deleting sorting, it works.
+2. Pagination not working still. When click next, no more records displayed.
+
+Need to address later.

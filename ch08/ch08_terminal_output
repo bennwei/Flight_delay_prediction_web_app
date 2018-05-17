@@ -1,0 +1,1486 @@
+Last login: Wed Aug 23 06:11:04 2017 from 10.0.2.2
+vagrant@precise64:~$ cd Agile_Data_Code_2
+vagrant@precise64:~/Agile_Data_Code_2$ PYSPARK_DRIVER_PYTHON=ipython pyspark
+Python 3.5.3 |Continuum Analytics, Inc.| (default, Mar  6 2017, 11:58:13)
+[GCC 4.4.7 20120313 (Red Hat 4.4.7-1)] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+17/08/23 06:30:47 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+17/08/23 06:30:48 WARN Utils: Your hostname, precise64 resolves to a loopback address: 127.0.1.1; using 10.0.2.15 instead (on interface eth0)
+17/08/23 06:30:48 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address
+Welcome to
+      ____              __
+     / __/__  ___ _____/ /__
+    _\ \/ _ \/ _ `/ __/  '_/
+   /__ / .__/\_,_/_/ /_/\_\   version 2.1.0
+      /_/
+
+Using Python version 3.5.3 (default, Mar  6 2017 11:58:13)
+SparkSession available as 'spark'.
+>>> import sys, os, re
+>>> import json
+>>>
+>>> # Load the on-time parquet file
+... on_time_dataframe = spark.read.parquet('data/on_time_performance.parquet')
+SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+SLF4J: Defaulting to no-operation (NOP) logger implementation
+SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+>>> on_time_dataframe.registerTempTable("on_time_performance")
+>>> origin_dest_distances = spark.sql("""
+...   SELECT Origin, Dest, AVG(Distance) AS Distance
+...   FROM on_time_performance
+...   GROUP BY Origin, Dest
+...   ORDER BY Distance
+...   """)
+>>> origin_dest_distances.show(1)
+17/08/23 06:32:51 WARN Utils: Truncated the string representation of a plan since it was too large. This behavior can be adjusted by setting 'spark.debug.maxToStringFields' in SparkEnv.conf.
++------+----+--------+
+|Origin|Dest|Distance|
++------+----+--------+
+|   EWR| JFK|    21.0|
++------+----+--------+
+only showing top 1 row
+
+>>> origin_dest_distances.repartition(1).write.mode("overwrite").json("data/origin_dest_distances.json")
+>>> os.system("cp data/origin_dest_distances.json/part* data/origin_dest_distances.jsonl")
+0
+>>>
+
+Last login: Wed Aug 23 06:30:38 2017 from 10.0.2.2
+vagrant@precise64:~$ cd Agile_Data_Code_2
+vagrant@precise64:~/Agile_Data_Code_2$
+vagrant@precise64:~/Agile_Data_Code_2$ mongoimport -d agile_data_science -c origin_dest_distances --file data/origin_dest_distances.jsonl
+connected to: 127.0.0.1
+imported 4696 objects
+vagrant@precise64:~/Agile_Data_Code_2$ mongo agile_data_science --eval 'db.origin_dest_distances.ensureIndex({Origin: 1, Dest: 1})'
+MongoDB shell version: 2.0.4
+connecting to: agile_data_science
+vagrant@precise64:~/Agile_Data_Code_2$ mongo
+MongoDB shell version: 2.0.4
+connecting to: test
+> db
+test
+> db.getSiblingDB()
+undefined
+> db.origin_dest_distances.find({"Origin": "ATL", "Dest": "JFK"})
+> quit()
+vagrant@precise64:~/Agile_Data_Code_2$ mongo agile_data_science
+MongoDB shell version: 2.0.4
+connecting to: agile_data_science
+> db.origin_dest_distances.find({"Origin": "ATL", "Dest": "JFK"})
+{ "_id" : ObjectId("599d22689cd93ab21f6eba16"), "Origin" : "ATL", "Dest" : "JFK", "Distance" : 760 }
+>
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Last login: Fri Aug 25 20:26:03 2017 from 10.0.2.2
+vagrant@precise64:~$ cd Agile_Data_Code_2
+vagrant@precise64:~/Agile_Data_Code_2$ /home/vagrant/anaconda/bin/python ch08/extract_features.py .
+Traceback (most recent call last):
+  File "ch08/extract_features.py", line 6, in <module>
+    on_time_dataframe = spark.read.parquet('data/on_time_performance.parquet')
+NameError: name 'spark' is not defined
+vagrant@precise64:~/Agile_Data_Code_2$ /home/vagrant/anaconda/bin/python ch08/train_spark_mllib_model.py .
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+17/08/25 23:03:01 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+17/08/25 23:03:01 WARN Utils: Your hostname, precise64 resolves to a loopback address: 127.0.1.1; using 10.0.2.15 instead (on interface eth0)
+17/08/25 23:03:01 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address
+[]
++--------+--------------------+--------------------+-------+----------+---------+---------+--------+----+--------+----------+---------+------+-------+
+|ArrDelay|          CRSArrTime|          CRSDepTime|Carrier|DayOfMonth|DayOfWeek|DayOfYear|DepDelay|Dest|Distance|FlightDate|FlightNum|Origin|  Route|
++--------+--------------------+--------------------+-------+----------+---------+---------+--------+----+--------+----------+---------+------+-------+
+|    13.0|2015-01-01 18:10:...|2015-01-01 15:30:...|     AA|         1|        4|        1|    14.0| DFW|   569.0|2015-01-01|     1024|   ABQ|ABQ-DFW|
+|    17.0|2015-01-01 10:15:...|2015-01-01 07:25:...|     AA|         1|        4|        1|    14.0| DFW|   569.0|2015-01-01|     1184|   ABQ|ABQ-DFW|
+|    36.0|2015-01-01 11:45:...|2015-01-01 09:00:...|     AA|         1|        4|        1|    -2.0| DFW|   569.0|2015-01-01|      336|   ABQ|ABQ-DFW|
+|   -21.0|2015-01-01 19:30:...|2015-01-01 17:55:...|     AA|         1|        4|        1|    -1.0| DFW|   731.0|2015-01-01|      125|   ATL|ATL-DFW|
+|   -14.0|2015-01-01 10:25:...|2015-01-01 08:55:...|     AA|         1|        4|        1|    -4.0| DFW|   731.0|2015-01-01|     1455|   ATL|ATL-DFW|
+|    16.0|2015-01-01 15:15:...|2015-01-01 13:45:...|     AA|         1|        4|        1|    15.0| DFW|   731.0|2015-01-01|     1473|   ATL|ATL-DFW|
++--------+--------------------+--------------------+-------+----------+---------+---------+--------+----+--------+----------+---------+------+-------+
+only showing top 6 rows
+
++--------+--------------+
+|ArrDelay|ArrDelayBucket|
++--------+--------------+
+|    13.0|           2.0|
+|    17.0|           2.0|
+|    36.0|           3.0|
+|   -21.0|           0.0|
+|   -14.0|           1.0|
+|    16.0|           2.0|
+|    -7.0|           1.0|
+|    13.0|           2.0|
+|    25.0|           2.0|
+|    58.0|           3.0|
+|    14.0|           2.0|
+|     1.0|           2.0|
+|   -29.0|           0.0|
+|   -10.0|           1.0|
+|    -3.0|           1.0|
+|    -8.0|           1.0|
+|    -1.0|           1.0|
+|   -14.0|           1.0|
+|   -16.0|           0.0|
+|    18.0|           2.0|
++--------+--------------+
+only showing top 20 rows
+
+SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+SLF4J: Defaulting to no-operation (NOP) logger implementation
+SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
++--------+--------------------+--------------------+----------+---------+---------+--------+--------+----------+---------+--------------+--------------------+
+|ArrDelay|          CRSArrTime|          CRSDepTime|DayOfMonth|DayOfWeek|DayOfYear|DepDelay|Distance|FlightDate|FlightNum|ArrDelayBucket|        Features_vec|
++--------+--------------------+--------------------+----------+---------+---------+--------+--------+----------+---------+--------------+--------------------+
+|    13.0|2015-01-01 18:10:...|2015-01-01 15:30:...|         1|        4|        1|    14.0|   569.0|2015-01-01|     1024|           2.0|[14.0,569.0,1.0,4...|
+|    17.0|2015-01-01 10:15:...|2015-01-01 07:25:...|         1|        4|        1|    14.0|   569.0|2015-01-01|     1184|           2.0|[14.0,569.0,1.0,4...|
+|    36.0|2015-01-01 11:45:...|2015-01-01 09:00:...|         1|        4|        1|    -2.0|   569.0|2015-01-01|      336|           3.0|[-2.0,569.0,1.0,4...|
+|   -21.0|2015-01-01 19:30:...|2015-01-01 17:55:...|         1|        4|        1|    -1.0|   731.0|2015-01-01|      125|           0.0|[-1.0,731.0,1.0,4...|
+|   -14.0|2015-01-01 10:25:...|2015-01-01 08:55:...|         1|        4|        1|    -4.0|   731.0|2015-01-01|     1455|           1.0|[-4.0,731.0,1.0,4...|
+|    16.0|2015-01-01 15:15:...|2015-01-01 13:45:...|         1|        4|        1|    15.0|   731.0|2015-01-01|     1473|           2.0|[15.0,731.0,1.0,4...|
+|    -7.0|2015-01-01 12:15:...|2015-01-01 10:45:...|         1|        4|        1|    -2.0|   731.0|2015-01-01|     1513|           1.0|[-2.0,731.0,1.0,4...|
+|    13.0|2015-01-01 16:50:...|2015-01-01 15:25:...|         1|        4|        1|     9.0|   731.0|2015-01-01|      194|           2.0|[9.0,731.0,1.0,4....|
+|    25.0|2015-01-01 20:30:...|2015-01-01 19:00:...|         1|        4|        1|    -2.0|   731.0|2015-01-01|      232|           2.0|[-2.0,731.0,1.0,4...|
+|    58.0|2015-01-01 21:40:...|2015-01-01 20:15:...|         1|        4|        1|    14.0|   731.0|2015-01-01|      276|           3.0|[14.0,731.0,1.0,4...|
+|    14.0|2015-01-01 13:25:...|2015-01-01 11:55:...|         1|        4|        1|    15.0|   731.0|2015-01-01|      314|           2.0|[15.0,731.0,1.0,4...|
+|     1.0|2015-01-01 18:05:...|2015-01-01 16:40:...|         1|        4|        1|    -5.0|   731.0|2015-01-01|      356|           2.0|[-5.0,731.0,1.0,4...|
+|   -29.0|2015-01-01 10:12:...|2015-01-01 08:15:...|         1|        4|        1|    -9.0|   594.0|2015-01-01|     1652|           0.0|[-9.0,594.0,1.0,4...|
+|   -10.0|2015-01-01 08:52:...|2015-01-01 07:00:...|         1|        4|        1|    -4.0|   594.0|2015-01-01|       17|           1.0|[-4.0,594.0,1.0,4...|
+|    -3.0|2015-01-01 23:02:...|2015-01-01 21:10:...|         1|        4|        1|    -7.0|   594.0|2015-01-01|      349|           1.0|[-7.0,594.0,1.0,4...|
+|    -8.0|2015-01-01 14:35:...|2015-01-01 13:30:...|         1|        4|        1|    -2.0|   190.0|2015-01-01|     1023|           1.0|[-2.0,190.0,1.0,4...|
+|    -1.0|2015-01-01 06:50:...|2015-01-01 05:50:...|         1|        4|        1|    -2.0|   190.0|2015-01-01|     1178|           1.0|[-2.0,190.0,1.0,4...|
+|   -14.0|2015-01-01 09:40:...|2015-01-01 08:30:...|         1|        4|        1|    -6.0|   190.0|2015-01-01|     1296|           1.0|[-6.0,190.0,1.0,4...|
+|   -16.0|2015-01-01 10:15:...|2015-01-01 09:05:...|         1|        4|        1|    -4.0|   190.0|2015-01-01|     1356|           0.0|[-4.0,190.0,1.0,4...|
+|    18.0|2015-01-01 16:55:...|2015-01-01 15:55:...|         1|        4|        1|     3.0|   190.0|2015-01-01|     1365|           2.0|[3.0,190.0,1.0,4....|
++--------+--------------------+--------------------+----------+---------+---------+--------+--------+----------+---------+--------------+--------------------+
+only showing top 20 rows
+
+17/08/25 23:15:58 WARN TaskSetManager: Stage 69 contains a task of very large size (1371 KB). The maximum recommended task size is 100 KB.
+Accuracy = 0.5955175421525486
++----------+-------+
+|Prediction|  count|
++----------+-------+
+|       0.0|   7063|
+|       1.0|4175197|
+|       3.0| 580875|
+|       2.0| 950873|
++----------+-------+
+
++--------+--------------------+--------------------+----------+---------+---------+--------+--------+----------+---------+--------------+--------------------+--------------------+--------------------+----------+
+|ArrDelay|          CRSArrTime|          CRSDepTime|DayOfMonth|DayOfWeek|DayOfYear|DepDelay|Distance|FlightDate|FlightNum|ArrDelayBucket|        Features_vec|       rawPrediction|         probability|Prediction|
++--------+--------------------+--------------------+----------+---------+---------+--------+--------+----------+---------+--------------+--------------------+--------------------+--------------------+----------+
+|   -25.0|2015-01-01 11:07:...|2015-01-01 07:30:...|         1|        4|        1|    -4.0|  1237.0|2015-01-01|      569|           0.0|[-4.0,1237.0,1.0,...|[6.43967984304999...|[0.32198399215249...|       1.0|
+|   -18.0|2015-01-01 09:25:...|2015-01-01 07:39:...|         1|        4|        1|    -5.0|   991.0|2015-01-01|      787|           0.0|[-5.0,991.0,1.0,4...|[4.87187631846677...|[0.24359381592333...|       1.0|
+|   -16.0|2015-01-01 09:00:...|2015-01-01 07:50:...|         1|        4|        1|    -5.0|   236.0|2015-01-01|      474|           0.0|[-5.0,236.0,1.0,4...|[2.72970483955577...|[0.13648524197778...|       1.0|
+|   -22.0|2015-01-01 10:42:...|2015-01-01 08:51:...|         1|        4|        1|     7.0|   537.0|2015-01-01|     5407|           0.0|[7.0,537.0,1.0,4....|[2.25915509229487...|[0.11295775461474...|       2.0|
+|     7.0|2015-01-01 14:35:...|2015-01-01 11:40:...|         1|        4|        1|    -4.0|  1865.0|2015-01-01|      705|           2.0|[-4.0,1865.0,1.0,...|[6.43373465780068...|[0.32168673289003...|       1.0|
+|   -12.0|2015-01-01 16:35:...|2015-01-01 15:00:...|         1|        4|        1|     0.0|   444.0|2015-01-01|     2272|           1.0|[0.0,444.0,1.0,4....|[2.17283090436403...|[0.10864154521820...|       1.0|
++--------+--------------------+--------------------+----------+---------+---------+--------+--------+----------+---------+--------------+--------------------+--------------------+--------------------+----------+
+only showing top 6 rows
+
+12/28/17
+
+elcome to Ubuntu 12.04 LTS (GNU/Linux 3.2.0-23-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com/
+
+182 packages can be updated.
+107 updates are security updates.
+
+New release '14.04.5 LTS' available.
+Run 'do-release-upgrade' to upgrade to it.
+
+
+
+Welcome to your Vagrant-built virtual machine.
+Last login: Mon Aug 28 23:45:15 2017 from 10.0.2.2
+vagrant@precise64:~$ ls
+Agile_Data_Code_2  anaconda  Desktop    Downloads      elasticsearch-hadoop  kafka  Music     postinstall.sh  spark            Templates  zeppelin
+airflow            certs     Documents  elasticsearch  hadoop                logs   Pictures  Public          spark-warehouse  Videos
+vagrant@precise64:~$ curl -XPOST 'http://localhost:5000/flights/delays/predict/regress' \
+>   -F 'DepDelay=5.0' \
+>   -F 'Carrier=AA' \
+>   -F 'Date=2016-12-23' \
+>   -F 'Dest=ATL' \
+>   -F 'FlightNum=1519' \
+>   -F 'Origin=SFO' \
+> | json_pp
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 24581    0 23938  100   643   172k   4749 --:--:-- --:--:-- --:--:--  174k
+malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "<!DOCTYPE HTML PUBLI...") at /usr/bin/json_pp line 44
+vagrant@precise64:~$ curl -XPOST 'http://localhost:5000/flights/delays/predict/regress' \
+>   -F 'DepDelay=5.0' \
+>   -F 'Carrier=AA' \
+>   -F 'FlightDate=2016-12-23' \
+>   -F 'Dest=ATL' \
+>   -F 'FlightNum=1519' \
+>   -F 'Origin=SFO' \
+> | json_pp
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   679  100    30  100   649    488  10560 --:--:-- --:--:-- --:--:-- 10816
+{
+   "Delay" : -37.7312846034433
+}
+vagrant@precise64:~$ cd Agile_Data_Code_2
+vagrant@precise64:~/Agile_Data_Code_2$ /home/vagrant/anaconda/bin/python ch08/extract_features.py .Traceback (most recent call last):
+  File "ch08/extract_features.py", line 6, in <module>
+    on_time_dataframe = spark.read.parquet('data/on_time_performance.parquet')
+NameError: name 'spark' is not defined
+vagrant@precise64:~/Agile_Data_Code_2$ spark
+The program 'spark' is currently not installed.  You can install it by typing:
+sudo apt-get install spark
+vagrant@precise64:~/Agile_Data_Code_2$ s
+s: command not found
+vagrant@precise64:~/Agile_Data_Code_2$ sc
+The program 'sc' is currently not installed.  You can install it by typing:
+sudo apt-get install sc
+vagrant@precise64:~/Agile_Data_Code_2$ brew info apache-spark
+No command 'brew' found, did you mean:
+ Command 'brec' from package 'bplay' (universe)
+ Command 'qbrew' from package 'qbrew' (universe)
+brew: command not found
+vagrant@precise64:~/Agile_Data_Code_2$ pyspark
+Python 3.5.3 |Continuum Analytics, Inc.| (default, Mar  6 2017, 11:58:13)
+[GCC 4.4.7 20120313 (Red Hat 4.4.7-1)] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+17/12/29 00:12:49 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+17/12/29 00:12:49 WARN Utils: Your hostname, precise64 resolves to a loopback address: 127.0.1.1; using 10.0.2.15 instead (on interface eth0)
+17/12/29 00:12:49 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address
+Welcome to
+      ____              __
+     / __/__  ___ _____/ /__
+    _\ \/ _ \/ _ `/ __/  '_/
+   /__ / .__/\_,_/_/ /_/\_\   version 2.1.0
+      /_/
+
+Using Python version 3.5.3 (default, Mar  6 2017 11:58:13)
+SparkSession available as 'spark'.
+>>> quit()
+vagrant@precise64:~/Agile_Data_Code_2$ /home/vagrant/anaconda/bin/python ch08/extract_features.py .
+Traceback (most recent call last):
+  File "ch08/extract_features.py", line 6, in <module>
+    on_time_dataframe = spark.read.parquet('data/on_time_performance.parquet')
+NameError: name 'spark' is not defined
+vagrant@precise64:~/Agile_Data_Code_2$ /home/vagrant/anaconda/bin/python ch08/extract_features.py .
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+17/12/29 00:27:57 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+17/12/29 00:27:57 WARN Utils: Your hostname, precise64 resolves to a loopback address: 127.0.1.1; using 10.0.2.15 instead (on interface eth0)
+17/12/29 00:27:57 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address
+SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+SLF4J: Defaulting to no-operation (NOP) logger implementation
+SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+17/12/29 00:28:05 WARN Utils: Truncated the string representation of a plan since it was too large. This behavior can be adjusted by setting 'spark.debug.maxToStringFields' in SparkEnv.conf.
++---------+----------+---------+----------+---------+-------+------+----+--------+--------+--------+----------+----------+
+|FlightNum|FlightDate|DayOfWeek|DayOfMonth|DayOfYear|Carrier|Origin|Dest|Distance|DepDelay|ArrDelay|CRSDepTime|CRSArrTime|
++---------+----------+---------+----------+---------+-------+------+----+--------+--------+--------+----------+----------+
+|     1519|2015-01-01|        4|         1|      1-1|     AA|   DFW| MEM|   432.0|    -3.0|    -6.0|      1345|      1510|
+|     1519|2015-01-01|        4|         1|      1-1|     AA|   MEM| DFW|   432.0|    -4.0|    -9.0|      1550|      1730|
+|     2349|2015-01-01|        4|         1|      1-1|     AA|   ORD| DFW|   802.0|     0.0|    26.0|      1845|      2115|
+|     1298|2015-01-01|        4|         1|      1-1|     AA|   DFW| ATL|   731.0|   100.0|   112.0|      1820|      2120|
+|     1422|2015-01-01|        4|         1|      1-1|     AA|   DFW| HDN|   769.0|    78.0|    78.0|      0800|      0925|
+|     1422|2015-01-01|        4|         1|      1-1|     AA|   HDN| DFW|   769.0|   332.0|   336.0|      1005|      1320|
+|     2287|2015-01-01|        4|         1|      1-1|     AA|   JAC| DFW|  1047.0|    -4.0|    21.0|      0800|      1200|
+|     1080|2015-01-01|        4|         1|      1-1|     AA|   EGE| ORD|  1007.0|    null|    null|      1415|      1755|
+|     1080|2015-01-01|        4|         1|      1-1|     AA|   ORD| EGE|  1007.0|    null|    null|      1145|      1335|
+|     2332|2015-01-01|        4|         1|      1-1|     AA|   DFW| ORD|   802.0|    null|    null|      0740|      0955|
+|      194|2015-01-01|        4|         1|      1-1|     AA|   DFW| ATL|   731.0|    null|    null|      1150|      1445|
+|      356|2015-01-01|        4|         1|      1-1|     AA|   ATL| DFW|   731.0|    -5.0|     1.0|      1640|      1805|
+|      356|2015-01-01|        4|         1|      1-1|     AA|   DFW| ATL|   731.0|    -4.0|   -11.0|      1300|      1600|
+|     2396|2015-01-01|        4|         1|      1-1|     AA|   DFW| ATL|   731.0|    76.0|    86.0|      1955|      2250|
+|     1513|2015-01-01|        4|         1|      1-1|     AA|   ATL| DFW|   731.0|    -2.0|    -7.0|      1045|      1215|
+|     1513|2015-01-01|        4|         1|      1-1|     AA|   DFW| ATL|   731.0|    -5.0|   -25.0|      0700|      1005|
+|      937|2015-01-01|        4|         1|      1-1|     AA|   DFW| EGE|   721.0|    35.0|    17.0|      1600|      1720|
+|      937|2015-01-01|        4|         1|      1-1|     AA|   EGE| LAX|   748.0|    10.0|   -12.0|      1805|      1920|
+|     1212|2015-01-01|        4|         1|      1-1|     AA|   DFW| SDF|   733.0|    null|    null|      1145|      1440|
+|     1212|2015-01-01|        4|         1|      1-1|     AA|   SDF| DFW|   733.0|    null|    null|      1520|      1640|
++---------+----------+---------+----------+---------+-------+------+----+--------+--------+--------+----------+----------+
+only showing top 20 rows
+
+/home/vagrant/spark/python/pyspark/sql/session.py:336: UserWarning: Using RDD of dict to inferSchema is deprecated. Use pyspark.sql.Row instead
+  warnings.warn("Using RDD of dict to inferSchema is deprecated. "
+bzip2: Output file ./data/simple_flight_delay_features.jsonl.bz2 already exists.
+vagrant@precise64:~/Agile_Data_Code_2$
+
+vagrant@precise64:~/Agile_Data_Code_2$
+vagrant@precise64:~/Agile_Data_Code_2$ /home/vagrant/anaconda/bin/python
+Python 3.5.3 |Continuum Analytics, Inc.| (default, Mar  6 2017, 11:58:13)
+[GCC 4.4.7 20120313 (Red Hat 4.4.7-1)] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+>>> quit()
+vagrant@precise64:~/Agile_Data_Code_2$ /home/vagrant/anaconda/bin/python
+Python 3.5.3 |Continuum Analytics, Inc.| (default, Mar  6 2017, 11:58:13)
+[GCC 4.4.7 20120313 (Red Hat 4.4.7-1)] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+>>> quit()
+vagrant@precise64:~/Agile_Data_Code_2$ python ch08/make_predictions.py 2016-12-12 .
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+17/12/29 05:44:06 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+17/12/29 05:44:06 WARN Utils: Your hostname, precise64 resolves to a loopback address: 127.0.1.1; using 10.0.2.15 instead (on interface eth0)
+17/12/29 05:44:06 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address
+17/12/29 05:44:07 WARN SparkContext: Using an existing SparkContext; some configuration may not take effect.
+SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+SLF4J: Defaulting to no-operation (NOP) logger implementation
+SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+Traceback (most recent call last):
+  File "ch08/make_predictions.py", line 149, in <module>
+    main(sys.argv[1], sys.argv[2])
+  File "ch08/make_predictions.py", line 43, in main
+    string_indexer_model = StringIndexerModel.load(string_indexer_model_path)
+  File "/home/vagrant/spark/python/pyspark/ml/util.py", line 252, in load
+    return cls.read().load(path)
+  File "/home/vagrant/spark/python/pyspark/ml/util.py", line 193, in load
+    java_obj = self._jread.load(path)
+  File "/home/vagrant/spark/python/lib/py4j-0.10.4-src.zip/py4j/java_gateway.py", line 1133, in __call__
+  File "/home/vagrant/spark/python/pyspark/sql/utils.py", line 63, in deco
+    return f(*a, **kw)
+  File "/home/vagrant/spark/python/lib/py4j-0.10.4-src.zip/py4j/protocol.py", line 319, in get_return_value
+py4j.protocol.Py4JJavaError: An error occurred while calling o41.load.
+: org.apache.hadoop.mapred.InvalidInputException: Input path does not exist: file:/home/vagrant/Agile_Data_Code_2/models/string_indexer_model_DayOfMonth.bin/metadata
+        at org.apache.hadoop.mapred.FileInputFormat.singleThreadedListStatus(FileInputFormat.java:287)
+        at org.apache.hadoop.mapred.FileInputFormat.listStatus(FileInputFormat.java:229)
+        at org.apache.hadoop.mapred.FileInputFormat.getSplits(FileInputFormat.java:315)
+        at org.apache.spark.rdd.HadoopRDD.getPartitions(HadoopRDD.scala:202)
+        at org.apache.spark.rdd.RDD$$anonfun$partitions$2.apply(RDD.scala:252)
+        at org.apache.spark.rdd.RDD$$anonfun$partitions$2.apply(RDD.scala:250)
+        at scala.Option.getOrElse(Option.scala:121)
+        at org.apache.spark.rdd.RDD.partitions(RDD.scala:250)
+        at org.apache.spark.rdd.MapPartitionsRDD.getPartitions(MapPartitionsRDD.scala:35)
+        at org.apache.spark.rdd.RDD$$anonfun$partitions$2.apply(RDD.scala:252)
+        at org.apache.spark.rdd.RDD$$anonfun$partitions$2.apply(RDD.scala:250)
+        at scala.Option.getOrElse(Option.scala:121)
+        at org.apache.spark.rdd.RDD.partitions(RDD.scala:250)
+        at org.apache.spark.rdd.RDD$$anonfun$take$1.apply(RDD.scala:1332)
+        at org.apache.spark.rdd.RDDOperationScope$.withScope(RDDOperationScope.scala:151)
+        at org.apache.spark.rdd.RDDOperationScope$.withScope(RDDOperationScope.scala:112)
+        at org.apache.spark.rdd.RDD.withScope(RDD.scala:362)
+        at org.apache.spark.rdd.RDD.take(RDD.scala:1326)
+        at org.apache.spark.rdd.RDD$$anonfun$first$1.apply(RDD.scala:1367)
+        at org.apache.spark.rdd.RDDOperationScope$.withScope(RDDOperationScope.scala:151)
+        at org.apache.spark.rdd.RDDOperationScope$.withScope(RDDOperationScope.scala:112)
+        at org.apache.spark.rdd.RDD.withScope(RDD.scala:362)
+        at org.apache.spark.rdd.RDD.first(RDD.scala:1366)
+        at org.apache.spark.ml.util.DefaultParamsReader$.loadMetadata(ReadWrite.scala:379)
+        at org.apache.spark.ml.feature.StringIndexerModel$StringIndexerModelReader.load(StringIndexer.scala:230)
+        at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+        at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+        at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+        at java.lang.reflect.Method.invoke(Method.java:498)
+        at py4j.reflection.MethodInvoker.invoke(MethodInvoker.java:244)
+        at py4j.reflection.ReflectionEngine.invoke(ReflectionEngine.java:357)
+        at py4j.Gateway.invoke(Gateway.java:280)
+        at py4j.commands.AbstractCommand.invokeMethod(AbstractCommand.java:132)
+        at py4j.commands.CallCommand.execute(CallCommand.java:79)
+        at py4j.GatewayConnection.run(GatewayConnection.java:214)
+        at java.lang.Thread.run(Thread.java:748)
+
+vagrant@precise64:~/Agile_Data_Code_2$ python ch08/make_predictions.py 2016-12-12 .
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+17/12/29 07:49:45 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+17/12/29 07:49:45 WARN Utils: Your hostname, precise64 resolves to a loopback address: 127.0.1.1; using 10.0.2.15 instead (on interface eth0)
+17/12/29 07:49:45 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address
+17/12/29 07:49:46 WARN SparkContext: Using an existing SparkContext; some configuration may not take effect.
+SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+SLF4J: Defaulting to no-operation (NOP) logger implementation
+SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+Traceback (most recent call last):
+  File "/home/vagrant/spark/python/pyspark/sql/utils.py", line 63, in deco
+    return f(*a, **kw)
+  File "/home/vagrant/spark/python/lib/py4j-0.10.4-src.zip/py4j/protocol.py", line 319, in get_return_value
+py4j.protocol.Py4JJavaError: An error occurred while calling o66.json.
+: org.apache.spark.sql.AnalysisException: Path does not exist: file:/home/vagrant/Agile_Data_Code_2/data/prediction_tasks_daily.json/2016-12-12;
+        at org.apache.spark.sql.execution.datasources.DataSource$$anonfun$14.apply(DataSource.scala:382)
+        at org.apache.spark.sql.execution.datasources.DataSource$$anonfun$14.apply(DataSource.scala:370)
+        at scala.collection.TraversableLike$$anonfun$flatMap$1.apply(TraversableLike.scala:241)
+        at scala.collection.TraversableLike$$anonfun$flatMap$1.apply(TraversableLike.scala:241)
+        at scala.collection.immutable.List.foreach(List.scala:381)
+        at scala.collection.TraversableLike$class.flatMap(TraversableLike.scala:241)
+        at scala.collection.immutable.List.flatMap(List.scala:344)
+        at org.apache.spark.sql.execution.datasources.DataSource.resolveRelation(DataSource.scala:370)
+        at org.apache.spark.sql.DataFrameReader.load(DataFrameReader.scala:152)
+        at org.apache.spark.sql.DataFrameReader.json(DataFrameReader.scala:298)
+        at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+        at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+        at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+        at java.lang.reflect.Method.invoke(Method.java:498)
+        at py4j.reflection.MethodInvoker.invoke(MethodInvoker.java:244)
+        at py4j.reflection.ReflectionEngine.invoke(ReflectionEngine.java:357)
+        at py4j.Gateway.invoke(Gateway.java:280)
+        at py4j.commands.AbstractCommand.invokeMethod(AbstractCommand.java:132)
+        at py4j.commands.CallCommand.execute(CallCommand.java:79)
+        at py4j.GatewayConnection.run(GatewayConnection.java:214)
+        at java.lang.Thread.run(Thread.java:748)
+
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "ch08/make_predictions.py", line 150, in <module>
+    main(sys.argv[1], sys.argv[2])
+  File "ch08/make_predictions.py", line 93, in main
+    prediction_requests = spark.read.json(today_input_path, schema=schema)
+  File "/home/vagrant/spark/python/pyspark/sql/readwriter.py", line 232, in json
+    return self._df(self._jreader.json(self._spark._sc._jvm.PythonUtils.toSeq(path)))
+  File "/home/vagrant/spark/python/lib/py4j-0.10.4-src.zip/py4j/java_gateway.py", line 1133, in __call__
+  File "/home/vagrant/spark/python/pyspark/sql/utils.py", line 69, in deco
+    raise AnalysisException(s.split(': ', 1)[1], stackTrace)
+pyspark.sql.utils.AnalysisException: 'Path does not exist: file:/home/vagrant/Agile_Data_Code_2/data/prediction_tasks_daily.json/2016-12-12;'
+vagrant@precise64:~/Agile_Data_Code_2$ curl -XPOST 'http://localhost:5000/flights/delays/predict/classify' \
+>   -F 'DepDelay=5.0' \
+>   -F 'Carrier=AA' \
+>   -F 'FlightDate=2016-12-23' \
+>   -F 'Dest=ATL' \
+>   -F 'FlightNum=1519' \
+>   -F 'Origin=SFO' \
+> | json_pp
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   924  100   275  100   649   5151  12156 --:--:-- --:--:-- --:--:-- 12480
+{
+   "DayOfYear" : 358,
+   "Carrier" : "AA",
+   "_id" : {
+      "$oid" : "5a45f47856c02c22b96c5dd5"
+   },
+   "FlightDate" : "2016-12-23",
+   "DayOfMonth" : 23,
+   "Dest" : "ATL",
+   "Distance" : 2139,
+   "Timestamp" : "2017-12-29T07:53:28.478957",
+   "FlightNum" : "1519",
+   "Origin" : "SFO",
+   "DepDelay" : 5,
+   "DayOfWeek" : 4
+}
+vagrant@precise64:~/Agile_Data_Code_2$
+vagrant@precise64:~/Agile_Data_Code_2$
+vagrant@precise64:~/Agile_Data_Code_2$ curl -XPOST 'http://localhost:5000/flights/delays/predict/classify' \
+>   -F 'DepDelay=5.0' \
+>   -F 'Carrier=AA' \
+>   -F 'FlightDate=2016-12-23' \
+>   -F 'Dest=ATL' \
+>   -F 'FlightNum=1519' \
+>   -F 'Origin=SFO' \
+> | json_pp
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   924  100   275  100   649  18126  42778 --:--:-- --:--:-- --:--:-- 46357
+{
+   "DayOfYear" : 358,
+   "Carrier" : "AA",
+   "_id" : {
+      "$oid" : "5a487ad456c02c22b96c5dd7"
+   },
+   "FlightDate" : "2016-12-23",
+   "DayOfMonth" : 23,
+   "Dest" : "ATL",
+   "Distance" : 2139,
+   "Timestamp" : "2017-12-31T05:51:16.077360",
+   "FlightNum" : "1519",
+   "Origin" : "SFO",
+   "DepDelay" : 5,
+   "DayOfWeek" : 4
+}
+vagrant@precise64:~/Agile_Data_Code_2$
+vagrant@precise64:~/Agile_Data_Code_2$ python ch08/fetch_prediction_requests.py 2016-12-12 .
+Traceback (most recent call last):
+  File "ch08/fetch_prediction_requests.py", line 9, in <module>
+    import pymongo_spark
+  File "/home/vagrant/Agile_Data_Code_2/lib/pymongo_spark.py", line 17, in <module>
+    import pyspark
+ImportError: No module named 'pyspark'
+vagrant@precise64:~/Agile_Data_Code_2$ which python
+/home/vagrant/anaconda/bin/python
+vagrant@precise64:~/Agile_Data_Code_2$ python ch08/fetch_prediction_requests.py 2016-12-12 .
+  File "ch08/fetch_prediction_requests.py", line 1
+    .#!/usr/bin/env python
+    ^
+SyntaxError: invalid syntax
+vagrant@precise64:~/Agile_Data_Code_2$ python ch08/fetch_prediction_requests.py 2016-12-12 .
+Traceback (most recent call last):
+  File "ch08/fetch_prediction_requests.py", line 9, in <module>
+    import pymongo_spark
+  File "/home/vagrant/Agile_Data_Code_2/lib/pymongo_spark.py", line 17, in <module>
+    import pyspark
+ImportError: No module named 'pyspark'
+vagrant@precise64:~/Agile_Data_Code_2$ export PYTHONPATH=$SPARK_HOME/python/:$PYTHONPATH
+vagrant@precise64:~/Agile_Data_Code_2$ which python
+/home/vagrant/anaconda/bin/python
+vagrant@precise64:~/Agile_Data_Code_2$ python ch08/fetch_prediction_requests.py 2016-12-12 .
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+18/01/01 05:57:25 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+18/01/01 05:57:25 WARN Utils: Your hostname, precise64 resolves to a loopback address: 127.0.1.1; using 10.0.2.15 instead (on interface eth0)
+18/01/01 05:57:25 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address
+18/01/01 05:57:27 WARN StandaloneMongoSplitter: WARNING: No Input Splits were calculated by the split code. Proceeding with a *single* split. Data may be too small, try lowering 'mongo.input.split_size' if this is undesirable.
+vagrant@precise64:~/Agile_Data_Code_2$ cat data/prediction_tasks.json/2016-12-12/part-00000 | json_pp
+cat: data/prediction_tasks.json/2016-12-12/part-00000: No such file or directory
+malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "(end of string)") at /usr/bin/json_pp line 44
+vagrant@precise64:~/Agile_Data_Code_2$ cat data/prediction_tasks_daily.json/2016-12-12/part-00000 | json_pp
+malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "(end of string)") at /usr/bin/json_pp line 44
+vagrant@precise64:~/Agile_Data_Code_2$ cat data/prediction_tasks_daily.json/2016-12-12/part-00000
+vagrant@precise64:~/Agile_Data_Code_2$ python ch08/fetch_prediction_requests.py 2017-12-31 .
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+18/01/01 06:07:46 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+18/01/01 06:07:46 WARN Utils: Your hostname, precise64 resolves to a loopback address: 127.0.1.1; using 10.0.2.15 instead (on interface eth0)
+18/01/01 06:07:46 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address
+18/01/01 06:07:48 WARN StandaloneMongoSplitter: WARNING: No Input Splits were calculated by the split code. Proceeding with a *single* split. Data may be too small, try lowering 'mongo.input.split_size' if this is undesirable.
+vagrant@precise64:~/Agile_Data_Code_2$ python ch08/fetch_prediction_requests.py 2017-12-28 .
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+18/01/02 05:52:20 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+18/01/02 05:52:20 WARN Utils: Your hostname, precise64 resolves to a loopback address: 127.0.1.1; using 10.0.2.15 instead (on interface eth0)
+18/01/02 05:52:20 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address
+18/01/02 05:52:22 WARN StandaloneMongoSplitter: WARNING: No Input Splits were calculated by the split code. Proceeding with a *single* split. Data may be too small, try lowering 'mongo.input.split_size' if this is undesirable.
+vagrant@precise64:~/Agile_Data_Code_2$ cat data/prediction_tasks_daily.json/2016-12-31/part-00000
+cat: data/prediction_tasks_daily.json/2016-12-31/part-00000: No such file or directory
+vagrant@precise64:~/Agile_Data_Code_2$ cat data/prediction_tasks_daily.json/2017-12-31/part-00000
+{"Carrier": "AA", "DayOfMonth": 23, "Origin": "SFO", "_id": {"$oid": "5a487ad456c02c22b96c5dd7"}, "Distance": 2139.0, "DayOfYear": 358, "Dest": "ATL", "FlightNum": "1519", "FlightDate": "2016-12-23", "DepDelay": 5.0, "Timestamp": "2017-12-31T05:51:16.077360", "DayOfWeek": 4}
+vagrant@precise64:~/Agile_Data_Code_2$
+vagrant@precise64:~/Agile_Data_Code_2$
+vagrant@precise64:~/Agile_Data_Code_2$ # rerun ch08/train_spark_mllib_model.py .
+vagrant@precise64:~/Agile_Data_Code_2$
+vagrant@precise64:~/Agile_Data_Code_2$ python ch08/train_spark_mllib_model.py .
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+18/01/02 16:28:59 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+18/01/02 16:28:59 WARN Utils: Your hostname, precise64 resolves to a loopback address: 127.0.1.1; using 10.0.2.15 instead (on interface eth0)
+18/01/02 16:28:59 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address
+[]
++--------+--------------------+--------------------+-------+----------+---------+---------+--------+----+--------+----------+---------+------+-------+
+|ArrDelay|          CRSArrTime|          CRSDepTime|Carrier|DayOfMonth|DayOfWeek|DayOfYear|DepDelay|Dest|Distance|FlightDate|FlightNum|Origin|  Route|
++--------+--------------------+--------------------+-------+----------+---------+---------+--------+----+--------+----------+---------+------+-------+
+|    13.0|2015-01-01 18:10:...|2015-01-01 15:30:...|     AA|         1|        4|        1|    14.0| DFW|   569.0|2015-01-01|     1024|   ABQ|ABQ-DFW|
+|    17.0|2015-01-01 10:15:...|2015-01-01 07:25:...|     AA|         1|        4|        1|    14.0| DFW|   569.0|2015-01-01|     1184|   ABQ|ABQ-DFW|
+|    36.0|2015-01-01 11:45:...|2015-01-01 09:00:...|     AA|         1|        4|        1|    -2.0| DFW|   569.0|2015-01-01|      336|   ABQ|ABQ-DFW|
+|   -21.0|2015-01-01 19:30:...|2015-01-01 17:55:...|     AA|         1|        4|        1|    -1.0| DFW|   731.0|2015-01-01|      125|   ATL|ATL-DFW|
+|   -14.0|2015-01-01 10:25:...|2015-01-01 08:55:...|     AA|         1|        4|        1|    -4.0| DFW|   731.0|2015-01-01|     1455|   ATL|ATL-DFW|
+|    16.0|2015-01-01 15:15:...|2015-01-01 13:45:...|     AA|         1|        4|        1|    15.0| DFW|   731.0|2015-01-01|     1473|   ATL|ATL-DFW|
++--------+--------------------+--------------------+-------+----------+---------+---------+--------+----+--------+----------+---------+------+-------+
+only showing top 6 rows
+
++--------+--------------+
+|ArrDelay|ArrDelayBucket|
++--------+--------------+
+|    13.0|           2.0|
+|    17.0|           2.0|
+|    36.0|           3.0|
+|   -21.0|           0.0|
+|   -14.0|           1.0|
+|    16.0|           2.0|
+|    -7.0|           1.0|
+|    13.0|           2.0|
+|    25.0|           2.0|
+|    58.0|           3.0|
+|    14.0|           2.0|
+|     1.0|           2.0|
+|   -29.0|           0.0|
+|   -10.0|           1.0|
+|    -3.0|           1.0|
+|    -8.0|           1.0|
+|    -1.0|           1.0|
+|   -14.0|           1.0|
+|   -16.0|           0.0|
+|    18.0|           2.0|
++--------+--------------+
+only showing top 20 rows
+
+SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+SLF4J: Defaulting to no-operation (NOP) logger implementation
+SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+Traceback (most recent call last):
+  File "/home/vagrant/spark/python/pyspark/sql/utils.py", line 63, in deco
+    return f(*a, **kw)
+  File "/home/vagrant/spark/python/lib/py4j-0.10.4-src.zip/py4j/protocol.py", line 319, in get_return_value
+py4j.protocol.Py4JJavaError: An error occurred while calling o225.transform.
+: java.lang.IllegalArgumentException: Field "DayOfMonth" does not exist.
+        at org.apache.spark.sql.types.StructType$$anonfun$apply$1.apply(StructType.scala:264)
+        at org.apache.spark.sql.types.StructType$$anonfun$apply$1.apply(StructType.scala:264)
+        at scala.collection.MapLike$class.getOrElse(MapLike.scala:128)
+        at scala.collection.AbstractMap.getOrElse(Map.scala:59)
+        at org.apache.spark.sql.types.StructType.apply(StructType.scala:263)
+        at org.apache.spark.ml.feature.VectorAssembler$$anonfun$5.apply(VectorAssembler.scala:116)
+        at org.apache.spark.ml.feature.VectorAssembler$$anonfun$5.apply(VectorAssembler.scala:116)
+        at scala.collection.TraversableLike$$anonfun$map$1.apply(TraversableLike.scala:234)
+        at scala.collection.TraversableLike$$anonfun$map$1.apply(TraversableLike.scala:234)
+        at scala.collection.IndexedSeqOptimized$class.foreach(IndexedSeqOptimized.scala:33)
+        at scala.collection.mutable.ArrayOps$ofRef.foreach(ArrayOps.scala:186)
+        at scala.collection.TraversableLike$class.map(TraversableLike.scala:234)
+        at scala.collection.mutable.ArrayOps$ofRef.map(ArrayOps.scala:186)
+        at org.apache.spark.ml.feature.VectorAssembler.transformSchema(VectorAssembler.scala:116)
+        at org.apache.spark.ml.PipelineStage.transformSchema(Pipeline.scala:74)
+        at org.apache.spark.ml.feature.VectorAssembler.transform(VectorAssembler.scala:54)
+        at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+        at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+        at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+        at java.lang.reflect.Method.invoke(Method.java:498)
+        at py4j.reflection.MethodInvoker.invoke(MethodInvoker.java:244)
+        at py4j.reflection.ReflectionEngine.invoke(ReflectionEngine.java:357)
+        at py4j.Gateway.invoke(Gateway.java:280)
+        at py4j.commands.AbstractCommand.invokeMethod(AbstractCommand.java:132)
+        at py4j.commands.CallCommand.execute(CallCommand.java:79)
+        at py4j.GatewayConnection.run(GatewayConnection.java:214)
+        at java.lang.Thread.run(Thread.java:748)
+
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "ch08/train_spark_mllib_model.py", line 191, in <module>
+    main(sys.argv[1])
+  File "ch08/train_spark_mllib_model.py", line 142, in main
+    final_vectorized_features = vector_assembler.transform(ml_bucketized_features)
+  File "/home/vagrant/spark/python/pyspark/ml/base.py", line 105, in transform
+    return self._transform(dataset)
+  File "/home/vagrant/spark/python/pyspark/ml/wrapper.py", line 252, in _transform
+    return DataFrame(self._java_obj.transform(dataset._jdf), dataset.sql_ctx)
+  File "/home/vagrant/spark/python/lib/py4j-0.10.4-src.zip/py4j/java_gateway.py", line 1133, in __call__
+  File "/home/vagrant/spark/python/pyspark/sql/utils.py", line 79, in deco
+    raise IllegalArgumentException(s.split(': ', 1)[1], stackTrace)
+pyspark.sql.utils.IllegalArgumentException: 'Field "DayOfMonth" does not exist.'
+vagrant@precise64:~/Agile_Data_Code_2$
+vagrant@precise64:~/Agile_Data_Code_2$
+vagrant@precise64:~/Agile_Data_Code_2$ python ch08/train_spark_mllib_model.py .
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+18/01/02 22:55:57 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+18/01/02 22:55:57 WARN Utils: Your hostname, precise64 resolves to a loopback address: 127.0.1.1; using 10.0.2.15 instead (on interface eth0)
+18/01/02 22:55:57 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address
+^CTraceback (most recent call last):
+  File "ch08/train_spark_mllib_model.py", line 191, in <module>
+    main(sys.argv[1])
+  File "ch08/train_spark_mllib_model.py", line 59, in main
+    features.first()
+  File "/home/vagrant/spark/python/pyspark/sql/dataframe.py", line 926, in first
+    return self.head()
+  File "/home/vagrant/spark/python/pyspark/sql/dataframe.py", line 914, in head
+    rs = self.head(1)
+  File "/home/vagrant/spark/python/pyspark/sql/dataframe.py", line 916, in head
+    return self.take(n)
+  File "/home/vagrant/spark/python/pyspark/sql/dataframe.py", line 429, in take
+    return self.limit(num).collect()
+  File "/home/vagrant/spark/python/pyspark/sql/dataframe.py", line 391, in collect
+    port = self._jdf.collectToPython()
+  File "/home/vagrant/spark/python/lib/py4j-0.10.4-src.zip/py4j/java_gateway.py", line 1131, in __call__
+  File "/home/vagrant/spark/python/lib/py4j-0.10.4-src.zip/py4j/java_gateway.py", line 883, in send_command
+  File "/home/vagrant/spark/python/lib/py4j-0.10.4-src.zip/py4j/java_gateway.py", line 1028, in send_command
+  File "/home/vagrant/anaconda/lib/python3.5/socket.py", line 576, in readinto
+    return self._sock.recv_into(b)
+  File "/home/vagrant/spark/python/pyspark/context.py", line 236, in signal_handler
+    raise KeyboardInterrupt()
+KeyboardInterrupt
+vagrant@precise64:~/Agile_Data_Code_2$ python ch08/train_spark_mllib_model.py .
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+18/01/02 22:56:52 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+18/01/02 22:56:52 WARN Utils: Your hostname, precise64 resolves to a loopback address: 127.0.1.1; using 10.0.2.15 instead (on interface eth0)
+18/01/02 22:56:52 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address
+[]
++--------+--------------------+--------------------+-------+----------+---------+---------+--------+----+--------+----------+---------+------+-------+
+|ArrDelay|          CRSArrTime|          CRSDepTime|Carrier|DayOfMonth|DayOfWeek|DayOfYear|DepDelay|Dest|Distance|FlightDate|FlightNum|Origin|  Route|
++--------+--------------------+--------------------+-------+----------+---------+---------+--------+----+--------+----------+---------+------+-------+
+|    13.0|2015-01-01 18:10:...|2015-01-01 15:30:...|     AA|         1|        4|        1|    14.0| DFW|   569.0|2015-01-01|     1024|   ABQ|ABQ-DFW|
+|    17.0|2015-01-01 10:15:...|2015-01-01 07:25:...|     AA|         1|        4|        1|    14.0| DFW|   569.0|2015-01-01|     1184|   ABQ|ABQ-DFW|
+|    36.0|2015-01-01 11:45:...|2015-01-01 09:00:...|     AA|         1|        4|        1|    -2.0| DFW|   569.0|2015-01-01|      336|   ABQ|ABQ-DFW|
+|   -21.0|2015-01-01 19:30:...|2015-01-01 17:55:...|     AA|         1|        4|        1|    -1.0| DFW|   731.0|2015-01-01|      125|   ATL|ATL-DFW|
+|   -14.0|2015-01-01 10:25:...|2015-01-01 08:55:...|     AA|         1|        4|        1|    -4.0| DFW|   731.0|2015-01-01|     1455|   ATL|ATL-DFW|
+|    16.0|2015-01-01 15:15:...|2015-01-01 13:45:...|     AA|         1|        4|        1|    15.0| DFW|   731.0|2015-01-01|     1473|   ATL|ATL-DFW|
++--------+--------------------+--------------------+-------+----------+---------+---------+--------+----+--------+----------+---------+------+-------+
+only showing top 6 rows
+
++--------+--------------+
+|ArrDelay|ArrDelayBucket|
++--------+--------------+
+|    13.0|           2.0|
+|    17.0|           2.0|
+|    36.0|           3.0|
+|   -21.0|           0.0|
+|   -14.0|           1.0|
+|    16.0|           2.0|
+|    -7.0|           1.0|
+|    13.0|           2.0|
+|    25.0|           2.0|
+|    58.0|           3.0|
+|    14.0|           2.0|
+|     1.0|           2.0|
+|   -29.0|           0.0|
+|   -10.0|           1.0|
+|    -3.0|           1.0|
+|    -8.0|           1.0|
+|    -1.0|           1.0|
+|   -14.0|           1.0|
+|   -16.0|           0.0|
+|    18.0|           2.0|
++--------+--------------+
+only showing top 20 rows
+
+SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+SLF4J: Defaulting to no-operation (NOP) logger implementation
+SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
++--------+--------------------+--------------------+--------+--------+----------+---------+--------------+--------------------+
+|ArrDelay|          CRSArrTime|          CRSDepTime|DepDelay|Distance|FlightDate|FlightNum|ArrDelayBucket|        Features_vec|
++--------+--------------------+--------------------+--------+--------+----------+---------+--------------+--------------------+
+|    13.0|2015-01-01 18:10:...|2015-01-01 15:30:...|    14.0|   569.0|2015-01-01|     1024|           2.0|[14.0,569.0,2.0,2...|
+|    17.0|2015-01-01 10:15:...|2015-01-01 07:25:...|    14.0|   569.0|2015-01-01|     1184|           2.0|[14.0,569.0,2.0,2...|
+|    36.0|2015-01-01 11:45:...|2015-01-01 09:00:...|    -2.0|   569.0|2015-01-01|      336|           3.0|[-2.0,569.0,2.0,2...|
+|   -21.0|2015-01-01 19:30:...|2015-01-01 17:55:...|    -1.0|   731.0|2015-01-01|      125|           0.0|[-1.0,731.0,2.0,2...|
+|   -14.0|2015-01-01 10:25:...|2015-01-01 08:55:...|    -4.0|   731.0|2015-01-01|     1455|           1.0|[-4.0,731.0,2.0,2...|
+|    16.0|2015-01-01 15:15:...|2015-01-01 13:45:...|    15.0|   731.0|2015-01-01|     1473|           2.0|[15.0,731.0,2.0,2...|
+|    -7.0|2015-01-01 12:15:...|2015-01-01 10:45:...|    -2.0|   731.0|2015-01-01|     1513|           1.0|[-2.0,731.0,2.0,2...|
+|    13.0|2015-01-01 16:50:...|2015-01-01 15:25:...|     9.0|   731.0|2015-01-01|      194|           2.0|[9.0,731.0,2.0,25...|
+|    25.0|2015-01-01 20:30:...|2015-01-01 19:00:...|    -2.0|   731.0|2015-01-01|      232|           2.0|[-2.0,731.0,2.0,2...|
+|    58.0|2015-01-01 21:40:...|2015-01-01 20:15:...|    14.0|   731.0|2015-01-01|      276|           3.0|[14.0,731.0,2.0,2...|
+|    14.0|2015-01-01 13:25:...|2015-01-01 11:55:...|    15.0|   731.0|2015-01-01|      314|           2.0|[15.0,731.0,2.0,2...|
+|     1.0|2015-01-01 18:05:...|2015-01-01 16:40:...|    -5.0|   731.0|2015-01-01|      356|           2.0|[-5.0,731.0,2.0,2...|
+|   -29.0|2015-01-01 10:12:...|2015-01-01 08:15:...|    -9.0|   594.0|2015-01-01|     1652|           0.0|[-9.0,594.0,2.0,2...|
+|   -10.0|2015-01-01 08:52:...|2015-01-01 07:00:...|    -4.0|   594.0|2015-01-01|       17|           1.0|[-4.0,594.0,2.0,2...|
+|    -3.0|2015-01-01 23:02:...|2015-01-01 21:10:...|    -7.0|   594.0|2015-01-01|      349|           1.0|[-7.0,594.0,2.0,2...|
+|    -8.0|2015-01-01 14:35:...|2015-01-01 13:30:...|    -2.0|   190.0|2015-01-01|     1023|           1.0|[-2.0,190.0,2.0,2...|
+|    -1.0|2015-01-01 06:50:...|2015-01-01 05:50:...|    -2.0|   190.0|2015-01-01|     1178|           1.0|[-2.0,190.0,2.0,2...|
+|   -14.0|2015-01-01 09:40:...|2015-01-01 08:30:...|    -6.0|   190.0|2015-01-01|     1296|           1.0|[-6.0,190.0,2.0,2...|
+|   -16.0|2015-01-01 10:15:...|2015-01-01 09:05:...|    -4.0|   190.0|2015-01-01|     1356|           0.0|[-4.0,190.0,2.0,2...|
+|    18.0|2015-01-01 16:55:...|2015-01-01 15:55:...|     3.0|   190.0|2015-01-01|     1365|           2.0|[3.0,190.0,2.0,25...|
++--------+--------------------+--------------------+--------+--------+----------+---------+--------------+--------------------+
+only showing top 20 rows
+
+18/01/02 23:21:41 WARN TaskSetManager: Stage 84 contains a task of very large size (1937 KB). The maximum recommended task size is 100 KB.
+Accuracy = 0.5955282176713789
++----------+-------+
+|Prediction|  count|
++----------+-------+
+|       0.0|   5322|
+|       1.0|4174759|
+|       3.0| 580613|
+|       2.0| 953314|
++----------+-------+
+
++--------+--------------------+--------------------+--------+--------+----------+---------+--------------+--------------------+--------------------+--------------------+----------+
+|ArrDelay|          CRSArrTime|          CRSDepTime|DepDelay|Distance|FlightDate|FlightNum|ArrDelayBucket|        Features_vec|       rawPrediction|         probability|Prediction|
++--------+--------------------+--------------------+--------+--------+----------+---------+--------------+--------------------+--------------------+--------------------+----------+
+|   -25.0|2015-01-01 11:07:...|2015-01-01 07:30:...|    -4.0|  1237.0|2015-01-01|      569|           0.0|[-4.0,1237.0,7.0,...|[6.14342765584882...|[0.30717138279244...|       1.0|
+|   -18.0|2015-01-01 09:25:...|2015-01-01 07:39:...|    -5.0|   991.0|2015-01-01|      787|           0.0|[-5.0,991.0,11.0,...|[5.07534385719552...|[0.25376719285977...|       1.0|
+|   -16.0|2015-01-01 09:00:...|2015-01-01 07:50:...|    -5.0|   236.0|2015-01-01|      474|           0.0|[-5.0,236.0,13.0,...|[2.70872364031197...|[0.13543618201559...|       1.0|
+|   -22.0|2015-01-01 10:42:...|2015-01-01 08:51:...|     7.0|   537.0|2015-01-01|     5407|           0.0|[7.0,537.0,4.0,25...|[2.35423426755973...|[0.11771171337798...|       2.0|
+|     7.0|2015-01-01 14:35:...|2015-01-01 11:40:...|    -4.0|  1865.0|2015-01-01|      705|           2.0|[-4.0,1865.0,0.0,...|[6.08317508333664...|[0.30415875416683...|       1.0|
+|   -12.0|2015-01-01 16:35:...|2015-01-01 15:00:...|     0.0|   444.0|2015-01-01|     2272|           1.0|[0.0,444.0,1.0,25...|[2.05135041529621...|[0.10256752076481...|       1.0|
++--------+--------------------+--------------------+--------+--------+----------+---------+--------------+--------------------+--------------------+--------------------+----------+
+only showing top 6 rows
+
+vagrant@precise64:~/Agile_Data_Code_2$ python ch08/make_predictions.py 2017-12-31 .
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+18/01/02 23:40:33 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+18/01/02 23:40:33 WARN Utils: Your hostname, precise64 resolves to a loopback address: 127.0.1.1; using 10.0.2.15 instead (on interface eth0)
+18/01/02 23:40:33 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address
+18/01/02 23:40:35 WARN SparkContext: Using an existing SparkContext; some configuration may not take effect.
+SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+SLF4J: Defaulting to no-operation (NOP) logger implementation
+SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+^CTraceback (most recent call last):
+  File "ch08/make_predictions.py", line 150, in <module>
+    main(sys.argv[1], sys.argv[2])
+  File "ch08/make_predictions.py", line 44, in main
+    string_indexer_model = StringIndexerModel.load(string_indexer_model_path)
+  File "/home/vagrant/spark/python/pyspark/ml/util.py", line 252, in load
+    return cls.read().load(path)
+  File "/home/vagrant/spark/python/pyspark/ml/util.py", line 193, in load
+    java_obj = self._jread.load(path)
+  File "/home/vagrant/spark/python/lib/py4j-0.10.4-src.zip/py4j/java_gateway.py", line 1131, in __call__
+  File "/home/vagrant/spark/python/lib/py4j-0.10.4-src.zip/py4j/java_gateway.py", line 883, in send_command
+  File "/home/vagrant/spark/python/lib/py4j-0.10.4-src.zip/py4j/java_gateway.py", line 1028, in send_command
+  File "/home/vagrant/anaconda/lib/python3.5/socket.py", line 576, in readinto
+    return self._sock.recv_into(b)
+  File "/home/vagrant/spark/python/pyspark/context.py", line 236, in signal_handler
+    raise KeyboardInterrupt()
+KeyboardInterrupt
+vagrant@precise64:~/Agile_Data_Code_2$ python ch08/make_predictions.py 2017-12-31 .
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+18/01/02 23:41:04 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+18/01/02 23:41:04 WARN Utils: Your hostname, precise64 resolves to a loopback address: 127.0.1.1; using 10.0.2.15 instead (on interface eth0)
+18/01/02 23:41:04 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address
+18/01/02 23:41:05 WARN SparkContext: Using an existing SparkContext; some configuration may not take effect.
+SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+SLF4J: Defaulting to no-operation (NOP) logger implementation
+SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
++-------+----------+---------+---------+--------+----+--------+----------+---------+------+--------------------+
+|Carrier|DayOfMonth|DayOfWeek|DayOfYear|DepDelay|Dest|Distance|FlightDate|FlightNum|Origin|           Timestamp|
++-------+----------+---------+---------+--------+----+--------+----------+---------+------+--------------------+
+|     AA|        23|        4|      358|     5.0| ATL|  2139.0|2016-12-23|     1519|   SFO|2017-12-31 05:51:...|
++-------+----------+---------+---------+--------+----+--------+----------+---------+------+--------------------+
+
++-------+----------+---------+---------+--------+----+--------+----------+---------+------+--------------------+-------+
+|Carrier|DayOfMonth|DayOfWeek|DayOfYear|DepDelay|Dest|Distance|FlightDate|FlightNum|Origin|           Timestamp|  Route|
++-------+----------+---------+---------+--------+----+--------+----------+---------+------+--------------------+-------+
+|     AA|        23|        4|      358|     5.0| ATL|  2139.0|2016-12-23|     1519|   SFO|2017-12-31 05:51:...|SFO-ATL|
++-------+----------+---------+---------+--------+----+--------+----------+---------+------+--------------------+-------+
+
++-------+----------+---------+---------+--------+----+--------+----------+---------+------+--------------------+-------+--------------------+
+|Carrier|DayOfMonth|DayOfWeek|DayOfYear|DepDelay|Dest|Distance|FlightDate|FlightNum|Origin|           Timestamp|  Route|        Features_vec|
++-------+----------+---------+---------+--------+----+--------+----------+---------+------+--------------------+-------+--------------------+
+|     AA|        23|        4|      358|     5.0| ATL|  2139.0|2016-12-23|     1519|   SFO|2017-12-31 05:51:...|SFO-ATL|[5.0,2139.0,2.0,8...|
++-------+----------+---------+---------+--------+----+--------+----------+---------+------+--------------------+-------+--------------------+
+
++-------+----------+---------+---------+--------+----+--------+----------+---------+------+--------------------+-------+----------+
+|Carrier|DayOfMonth|DayOfWeek|DayOfYear|DepDelay|Dest|Distance|FlightDate|FlightNum|Origin|           Timestamp|  Route|Prediction|
++-------+----------+---------+---------+--------+----+--------+----------+---------+------+--------------------+-------+----------+
+|     AA|        23|        4|      358|     5.0| ATL|  2139.0|2016-12-23|     1519|   SFO|2017-12-31 05:51:...|SFO-ATL|       1.0|
++-------+----------+---------+---------+--------+----+--------+----------+---------+------+--------------------+-------+----------+
+
+vagrant@precise64:~/Agile_Data_Code_2$ ------+---------+------+--------------------+-------+--------------------+
+------+---------+------+--------------------+-------+--------------------+: command not found
+vagrant@precise64:~/Agile_Data_Code_2$
+vagrant@precise64:~/Agile_Data_Code_2$ +-------+----------+---------+---------+--------+----+--------+----------+---------+------+--------------------+-------+----------+
++-------+----------+---------+---------+--------+----+--------+----------+---------+------+--------------------+-------+----------+: command not found
+vagrant@precise64:~/Agile_Data_Code_2$ |Carrier|DayOfMonth|DayOfWeek|DayOfYear|DepDelay|Dest|Distance|FlightDate|FlightNum|Origin|           Timestamp|  Route|Prediction|
+-bash: syntax error near unexpected token `|'
+vagrant@precise64:~/Agile_Data_Code_2$ +-------+----------+---------+---------+--------+----+--------+----------+---------+------+--------------------+-------+----------+
++-------+----------+---------+---------+--------+----+--------+----------+---------+------+--------------------+-------+----------+: command not found
+vagrant@precise64:~/Agile_Data_Code_2$ |     AA|        23|        4|      358|     5.0| ATL|  2139.0|2016-12-23|     1519|   SFO|2017-12-31 05:51:...|SFO-ATL|       1.0|
+-bash: syntax error near unexpected token `|'
+vagrant@precise64:~/Agile_Data_Code_2$ +-------+----------+---------+---------+--------+----+--------+----------+---------+------+--------------------+-------+----------+
++-------+----------+---------+---------+--------+----+--------+----------+---------+------+--------------------+-------+----------+: command not found
+vagrant@precise64:~/Agile_Data_Code_2$
+vagrant@precise64:~/Agile_Data_Code_2$ vagrant@precise64:~/Agile_Data_Code_2$
+-bash: vagrant@precise64:~/Agile_Data_Code_2$: No such file or directory
+vagrant@precise64:~/Agile_Data_Code_2$
+vagrant@precise64:~/Agile_Data_Code_2$
+vagrant@precise64:~/Agile_Data_Code_2$ cat data/prediction_results_daily.json/2017-12-31/part-* | json_pp
+{
+   "Route" : "SFO-ATL",
+   "DayOfYear" : 358,
+   "Carrier" : "AA",
+   "Prediction" : 1,
+   "FlightDate" : "2016-12-23",
+   "DayOfMonth" : 23,
+   "Dest" : "ATL",
+   "Distance" : 2139,
+   "Timestamp" : "2017-12-31T05:51:16.077Z",
+   "FlightNum" : "1519",
+   "Origin" : "SFO",
+   "DepDelay" : 5,
+   "DayOfWeek" : 4
+}
+vagrant@precise64:~/Agile_Data_Code_2$ python ch08/load_prediction_results.py 2017-12-31 .
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+18/01/02 23:49:05 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+18/01/02 23:49:05 WARN Utils: Your hostname, precise64 resolves to a loopback address: 127.0.1.1; using 10.0.2.15 instead (on interface eth0)
+18/01/02 23:49:05 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address
+vagrant@precise64:~/Agile_Data_Code_2$
+
+Last login: Fri Dec 29 00:25:30 2017 from 10.0.2.2
+vagrant@precise64:~$
+vagrant@precise64:~$
+vagrant@precise64:~$ sudo service mongod start
+mongod: unrecognized service
+vagrant@precise64:~$ mongod start
+Invalid command: start
+Allowed options:
+
+General options:
+  -h [ --help ]               show this usage information
+  --version                   show version information
+  -f [ --config ] arg         configuration file specifying additional options
+  -v [ --verbose ]            be more verbose (include multiple times for more
+                              verbosity e.g. -vvvvv)
+  --quiet                     quieter output
+  --port arg                  specify port number
+  --bind_ip arg               comma separated list of ip addresses to listen on
+                              - all local ips by default
+  --maxConns arg              max number of simultaneous connections
+  --objcheck                  inspect client data for validity on receipt
+  --logpath arg               log file to send write to instead of stdout - has
+                              to be a file, not directory
+  --logappend                 append to logpath instead of over-writing
+  --pidfilepath arg           full path to pidfile (if not set, no pidfile is
+                              created)
+  --keyFile arg               private key for cluster authentication (only for
+                              replica sets)
+  --nounixsocket              disable listening on unix sockets
+  --unixSocketPrefix arg      alternative directory for UNIX domain sockets
+                              (defaults to /tmp)
+  --fork                      fork server process
+  --auth                      run with security
+  --cpu                       periodically show cpu and iowait utilization
+  --dbpath arg                directory for datafiles
+  --diaglog arg               0=off 1=W 2=R 3=both 7=W+some reads
+  --directoryperdb            each database will be stored in a separate
+                              directory
+  --journal                   enable journaling
+  --journalOptions arg        journal diagnostic options
+  --journalCommitInterval arg how often to group/batch commit (ms)
+  --ipv6                      enable IPv6 support (disabled by default)
+  --jsonp                     allow JSONP access via http (has security
+                              implications)
+  --noauth                    run without security
+  --nohttpinterface           disable http interface
+  --nojournal                 disable journaling (journaling is on by default
+                              for 64 bit)
+  --noprealloc                disable data file preallocation - will often hurt
+                              performance
+  --noscripting               disable scripting engine
+  --notablescan               do not allow table scans
+  --nssize arg (=16)          .ns file size (in MB) for new databases
+  --profile arg               0=off 1=slow, 2=all
+  --quota                     limits each database to a certain number of files
+                              (8 default)
+  --quotaFiles arg            number of files allower per db, requires --quota
+  --rest                      turn on simple rest api
+  --repair                    run repair on all dbs
+  --repairpath arg            root directory for repair files - defaults to
+                              dbpath
+  --slowms arg (=100)         value of slow for profile and console log
+  --smallfiles                use a smaller default file size
+  --shutdown                  kill a running server (for init scripts)
+  --syncdelay arg (=60)       seconds between disk syncs (0=never, but not
+                              recommended)
+  --sysinfo                   print some diagnostic system information
+  --upgrade                   upgrade db if needed
+
+Replication options:
+  --fastsync            indicate that this instance is starting from a dbpath
+                        snapshot of the repl peer
+  --oplogSize arg       size limit (in MB) for op log
+
+Master/slave options:
+  --master              master mode
+  --slave               slave mode
+  --source arg          when slave: specify master as <server:port>
+  --only arg            when slave: specify a single database to replicate
+  --slavedelay arg      specify delay (in seconds) to be used when applying
+                        master ops to slave
+  --autoresync          automatically resync if slave data is stale
+
+Replica set options:
+  --replSet arg         arg is <setname>[/<optionalseedhostlist>]
+
+Sharding options:
+  --configsvr           declare this is a config db of a cluster; default port
+                        27019; default dir /data/configdb
+  --shardsvr            declare this is a shard db of a cluster; default port
+                        27018
+  --noMoveParanoia      turn off paranoid saving of data for moveChunk.  this
+                        is on by default for now, but default will switch
+
+vagrant@precise64:~$
+vagrant@precise64:~$ mongo
+MongoDB shell version: 2.0.4
+connecting to: test
+> db.prediction_results.find().pretty()
+> db
+test
+> quit()
+vagrant@precise64:~$ cd Agile_Data_Code_2
+vagrant@precise64:~/Agile_Data_Code_2$ mongo
+MongoDB shell version: 2.0.4
+connecting to: test
+> db
+test
+> db.flights_per_airplane.find({"TailNum": "N361VA"}).explain()
+{
+        "cursor" : "BasicCursor",
+        "nscanned" : 0,
+        "nscannedObjects" : 0,
+        "n" : 0,
+        "millis" : 0,
+        "nYields" : 0,
+        "nChunkSkips" : 0,
+        "isMultiKey" : false,
+        "indexOnly" : false,
+        "indexBounds" : {
+
+        }
+}
+>
+> db.prediction_results.find().pretty()
+> quit()
+vagrant@precise64:~/Agile_Data_Code_2$
+vagrant@precise64:~/Agile_Data_Code_2$ mongo agile_data_science
+MongoDB shell version: 2.0.4
+connecting to: agile_data_science
+> db.prediction_results.find().pretty()
+{
+        "_id" : ObjectId("5a4c1a75ca56c66071a48f50"),
+        "FlightNum" : "1519",
+        "Origin" : "SFO",
+        "DayOfWeek" : 4,
+        "Dest" : "ATL",
+        "DepDelay" : 5,
+        "Prediction" : 1,
+        "DayOfMonth" : 23,
+        "Timestamp" : "2017-12-31T05:51:16.077Z",
+        "FlightDate" : "2016-12-23",
+        "DayOfYear" : 358,
+        "Carrier" : "AA",
+        "Distance" : 2139,
+        "Route" : "SFO-ATL"
+}
+>
+
+_______________________________________________
+
+agrant@precise64:~/Agile_Data_Code_2$ ln -s $PROJECT_HOME/ch08/airflow/setup.py ~/airflow/dags/setup.py
+vagrant@precise64:~/Agile_Data_Code_2$ setup.py
+setup.py: command not found
+vagrant@precise64:~/Agile_Data_Code_2$ vagrant@precise64:~/Agile_Data_Code_2$
+-bash: vagrant@precise64:~/Agile_Data_Code_2$: No such file or directory
+vagrant@precise64:~/Agile_Data_Code_2$ ls -lah ~/airflow/dags/
+total 8.0K
+drwxr-xr-x 2 vagrant vagrant 4.0K Jan  4 06:42 .
+drwxr-xr-x 5 vagrant vagrant 4.0K May 13  2017 ..
+lrwxrwxrwx 1 vagrant vagrant   53 Jan  4 06:42 setup.py -> /home/vagrant/Agile_Data_Code_2/ch08/airflow/setup.py
+vagrant@precise64:~/Agile_Data_Code_2$ python ~/airflow/dags/setup.py
+[2018-01-04 06:44:16,592] {__init__.py:57} INFO - Using executor SequentialExecutor
+vagrant@precise64:~/Agile_Data_Code_2$ airflow list_dags
+[2018-01-04 06:44:36,156] {__init__.py:57} INFO - Using executor SequentialExecutor
+[2018-01-04 06:44:36,599] {models.py:167} INFO - Filling up the DagBag from /home/vagrant/airflow/dags
+
+
+-------------------------------------------------------------------
+DAGS
+-------------------------------------------------------------------
+agile_data_science_batch_prediction_model_training
+agile_data_science_batch_predictions_daily
+example_bash_operator
+example_branch_dop_operator_v3
+example_branch_operator
+example_http_operator
+example_passing_params_via_test_command
+example_python_operator
+example_short_circuit_operator
+example_skip_dag
+example_subdag_operator
+example_subdag_operator.section-1
+example_subdag_operator.section-2
+example_trigger_controller_dag
+example_trigger_target_dag
+example_xcom
+latest_only
+latest_only_with_trigger
+test_utils
+tutorial
+
+vagrant@precise64:~/Agile_Data_Code_2$ airflow list_tasks agile_data_science_batch_prediction_model_training
+[2018-01-04 06:45:14,330] {__init__.py:57} INFO - Using executor SequentialExecutor
+[2018-01-04 06:45:14,709] {models.py:167} INFO - Filling up the DagBag from /home/vagrant/airflow/dags
+pyspark_extract_features
+pyspark_train_classifier_model
+vagrant@precise64:~/Agile_Data_Code_2$ airflow list_tasks agile_data_science_batch_predictions_daily
+[2018-01-04 06:45:35,901] {__init__.py:57} INFO - Using executor SequentialExecutor
+[2018-01-04 06:45:36,260] {models.py:167} INFO - Filling up the DagBag from /home/vagrant/airflow/dags
+pyspark_fetch_prediction_requests
+pyspark_load_prediction_results
+pyspark_make_predictions
+vagrant@precise64:~/Agile_Data_Code_2$ airflow test agile_data_science_batch_prediction_model_training pyspark_extract_features 2017-12-31
+[2018-01-04 06:47:54,626] {__init__.py:57} INFO - Using executor SequentialExecutor
+[2018-01-04 06:47:54,970] {models.py:167} INFO - Filling up the DagBag from /home/vagrant/airflow/dags
+/home/vagrant/anaconda/lib/python3.5/site-packages/airflow/models.py:1140: PendingDeprecationWarning: generator 'get_dep_statuses' raised StopIteration
+  dep_context):
+/home/vagrant/anaconda/lib/python3.5/site-packages/airflow/ti_deps/deps/base_ti_dep.py:94: PendingDeprecationWarning: generator '_get_dep_statuses' raised StopIteration
+  for dep_status in self._get_dep_statuses(ti, session, dep_context):
+[2018-01-04 06:47:55,333] {models.py:1126} INFO - Dependencies all met for <TaskInstance: agile_data_science_batch_prediction_model_training.pyspark_extract_features 2017-12-31 00:00:00 [None]>
+[2018-01-04 06:47:55,335] {models.py:1126} INFO - Dependencies all met for <TaskInstance: agile_data_science_batch_prediction_model_training.pyspark_extract_features 2017-12-31 00:00:00 [None]>
+[2018-01-04 06:47:55,336] {models.py:1318} INFO -
+--------------------------------------------------------------------------------
+Starting attempt 1 of 4
+--------------------------------------------------------------------------------
+
+[2018-01-04 06:47:55,336] {models.py:1342} INFO - Executing <Task(BashOperator): pyspark_extract_features> on 2017-12-31 00:00:00
+[2018-01-04 06:47:55,350] {bash_operator.py:71} INFO - tmp dir root location:
+/tmp
+[2018-01-04 06:47:55,351] {bash_operator.py:80} INFO - Temporary script location :/tmp/airflowtmpljytso9k//tmp/airflowtmpljytso9k/pyspark_extract_featureso2h11t7b
+[2018-01-04 06:47:55,351] {bash_operator.py:81} INFO - Running command:
+spark-submit --master local[8]   /home/vagrant/Agile_Data_Code_2//ch08/extract_features.py   /home/vagrant/Agile_Data_Code_2/
+[2018-01-04 06:47:55,356] {bash_operator.py:90} INFO - Output:
+[2018-01-04 06:47:59,653] {bash_operator.py:94} INFO - SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+[2018-01-04 06:47:59,653] {bash_operator.py:94} INFO - SLF4J: Defaulting to no-operation (NOP) logger implementation
+[2018-01-04 06:47:59,653] {bash_operator.py:94} INFO - SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+[2018-01-04 06:48:03,059] {bash_operator.py:94} INFO - +---------+----------+---------+----------+---------+-------+------+----+--------+--------+--------+----------+----------+
+[2018-01-04 06:48:03,059] {bash_operator.py:94} INFO - |FlightNum|FlightDate|DayOfWeek|DayOfMonth|DayOfYear|Carrier|Origin|Dest|Distance|DepDelay|ArrDelay|CRSDepTime|CRSArrTime|
+[2018-01-04 06:48:03,059] {bash_operator.py:94} INFO - +---------+----------+---------+----------+---------+-------+------+----+--------+--------+--------+----------+----------+
+[2018-01-04 06:48:03,059] {bash_operator.py:94} INFO - |      269|2015-07-14|        2|        14|     7-14|     AA|   SMF| DFW|  1431.0|     1.0|     2.0|      0520|      1044|
+[2018-01-04 06:48:03,059] {bash_operator.py:94} INFO - |      190|2015-07-14|        2|        14|     7-14|     AA|   DFW| SAT|   247.0|     3.0|    -1.0|      1625|      1729|
+[2018-01-04 06:48:03,059] {bash_operator.py:94} INFO - |      190|2015-07-14|        2|        14|     7-14|     AA|   SAT| DFW|   247.0|    10.0|     2.0|      1809|      1925|
+[2018-01-04 06:48:03,059] {bash_operator.py:94} INFO - |     2180|2015-07-14|        2|        14|     7-14|     AA|   DFW| CMH|   926.0|    -1.0|    -6.0|      2015|      2351|
+[2018-01-04 06:48:03,059] {bash_operator.py:94} INFO - |     2372|2015-07-14|        2|        14|     7-14|     AA|   CMH| DFW|   926.0|    -5.0|   -12.0|      0610|      0749|
+[2018-01-04 06:48:03,060] {bash_operator.py:94} INFO - |     1025|2015-07-14|        2|        14|     7-14|     AA|   PNS| DFW|   604.0|    -5.0|    -6.0|      0744|      0945|
+[2018-01-04 06:48:03,060] {bash_operator.py:94} INFO - |     1209|2015-07-14|        2|        14|     7-14|     AA|   DFW| SMF|  1431.0|    -3.0|   -22.0|      1048|      1232|
+[2018-01-04 06:48:03,060] {bash_operator.py:94} INFO - |     1209|2015-07-14|        2|        14|     7-14|     AA|   SMF| DFW|  1431.0|    -6.0|   -12.0|      1345|      1909|
+[2018-01-04 06:48:03,060] {bash_operator.py:94} INFO - |       81|2015-07-14|        2|        14|     7-14|     AA|   DFW| TUS|   813.0|    78.0|    69.0|      1925|      1942|
+[2018-01-04 06:48:03,060] {bash_operator.py:94} INFO - |     1347|2015-07-14|        2|        14|     7-14|     AA|   PIT| DFW|  1067.0|    -4.0|    -9.0|      0740|      0935|
+[2018-01-04 06:48:03,060] {bash_operator.py:94} INFO - |     1408|2015-07-14|        2|        14|     7-14|     AA|   DFW| OKC|   175.0|    -6.0|   -15.0|      2050|      2150|
+[2018-01-04 06:48:03,060] {bash_operator.py:94} INFO - |     1634|2015-07-14|        2|        14|     7-14|     AA|   DEN| DFW|   641.0|    97.0|   101.0|      1745|      2051|
+[2018-01-04 06:48:03,060] {bash_operator.py:94} INFO - |     1634|2015-07-14|        2|        14|     7-14|     AA|   DFW| DEN|   641.0|   119.0|   116.0|      1540|      1648|
+[2018-01-04 06:48:03,060] {bash_operator.py:94} INFO - |     2215|2015-07-14|        2|        14|     7-14|     AA|   DTW| DFW|   986.0|    -5.0|   -17.0|      0750|      0944|
+[2018-01-04 06:48:03,060] {bash_operator.py:94} INFO - |     1199|2015-07-14|        2|        14|     7-14|     AA|   STL| ORD|   258.0|    -9.0|     0.0|      0635|      0749|
+[2018-01-04 06:48:03,061] {bash_operator.py:94} INFO - |     1258|2015-07-14|        2|        14|     7-14|     AA|   STL| LAX|  1592.0|     6.0|     4.0|      1229|      1430|
+[2018-01-04 06:48:03,061] {bash_operator.py:94} INFO - |     2403|2015-07-14|        2|        14|     7-14|     AA|   LAX| STL|  1592.0|    15.0|     6.0|      1515|      2100|
+[2018-01-04 06:48:03,061] {bash_operator.py:94} INFO - |      358|2015-07-14|        2|        14|     7-14|     AA|   ORD| STL|   258.0|    -4.0|   -22.0|      0859|      1014|
+[2018-01-04 06:48:03,061] {bash_operator.py:94} INFO - |      127|2015-07-14|        2|        14|     7-14|     AA|   IAD| DFW|  1172.0|    -4.0|     0.0|      0720|      0927|
+[2018-01-04 06:48:03,061] {bash_operator.py:94} INFO - |      970|2015-07-14|        2|        14|     7-14|     AA|   DFW| MCI|   460.0|    -1.0|   -13.0|      1026|      1206|
+[2018-01-04 06:48:03,061] {bash_operator.py:94} INFO - +---------+----------+---------+----------+---------+-------+------+----+--------+--------+--------+----------+----------+
+[2018-01-04 06:48:03,061] {bash_operator.py:94} INFO - only showing top 20 rows
+[2018-01-04 06:48:03,061] {bash_operator.py:94} INFO -
+[2018-01-04 06:48:04,558] {bash_operator.py:94} INFO - /home/vagrant/spark/python/pyspark/sql/session.py:336: UserWarning: Using RDD of dict to inferSchema is deprecated. Use pyspark.sql.Row instead
+[2018-01-04 06:48:04,558] {bash_operator.py:94} INFO - warnings.warn("Using RDD of dict to inferSchema is deprecated. "
+bzip2: Output file /home/vagrant/Agile_Data_Code_2//data/simple_flight_delay_features.jsonl.bz2 already exists.            (6 + 2) / 8]
+[2018-01-04 07:06:57,371] {bash_operator.py:97} INFO - Command exited with return code 0
+vagrant@precise64:~/Agile_Data_Code_2$ airflow test agile_data_science_batch_prediction_model_training pyspark_train_classifier_model 2017-12-31
+[2018-01-04 22:44:17,345] {__init__.py:57} INFO - Using executor SequentialExecutor
+[2018-01-04 22:44:17,797] {models.py:167} INFO - Filling up the DagBag from /home/vagrant/airflow/dags
+/home/vagrant/anaconda/lib/python3.5/site-packages/airflow/models.py:1140: PendingDeprecationWarning: generator 'get_dep_statuses' raised StopIteration
+  dep_context):
+/home/vagrant/anaconda/lib/python3.5/site-packages/airflow/ti_deps/deps/base_ti_dep.py:94: PendingDeprecationWarning: generator '_get_dep_statuses' raised StopIteration
+  for dep_status in self._get_dep_statuses(ti, session, dep_context):
+[2018-01-04 22:44:18,153] {models.py:1126} INFO - Dependencies all met for <TaskInstance: agile_data_science_batch_prediction_model_training.pyspark_train_classifier_model 2017-12-31 00:00:00 [None]>
+[2018-01-04 22:44:18,155] {models.py:1126} INFO - Dependencies all met for <TaskInstance: agile_data_science_batch_prediction_model_training.pyspark_train_classifier_model 2017-12-31 00:00:00 [None]>
+[2018-01-04 22:44:18,155] {models.py:1318} INFO -
+--------------------------------------------------------------------------------
+Starting attempt 1 of 4
+--------------------------------------------------------------------------------
+
+[2018-01-04 22:44:18,156] {models.py:1342} INFO - Executing <Task(BashOperator): pyspark_train_classifier_model> on 2017-12-31 00:00:00
+[2018-01-04 22:44:18,168] {bash_operator.py:71} INFO - tmp dir root location:
+/tmp
+[2018-01-04 22:44:18,168] {bash_operator.py:80} INFO - Temporary script location :/tmp/airflowtmpurlbp8_u//tmp/airflowtmpurlbp8_u/pyspark_train_classifier_modelt57z4voa
+[2018-01-04 22:44:18,169] {bash_operator.py:81} INFO - Running command:
+spark-submit --master local[8]   /home/vagrant/Agile_Data_Code_2//ch08/train_spark_mllib_model.py   /home/vagrant/Agile_Data_Code_2/
+[2018-01-04 22:44:18,173] {bash_operator.py:90} INFO - Output:
+[]                                                                                                                         (0 + 8) / 8]
+[2018-01-04 22:57:22,620] {bash_operator.py:94} INFO - +--------+--------------------+--------------------+-------+----------+---------+---------+--------+----+--------+----------+---------+------+-------+
+[2018-01-04 22:57:22,620] {bash_operator.py:94} INFO - |ArrDelay|          CRSArrTime|          CRSDepTime|Carrier|DayOfMonth|DayOfWeek|DayOfYear|DepDelay|Dest|Distance|FlightDate|FlightNum|Origin|  Route|
+[2018-01-04 22:57:22,620] {bash_operator.py:94} INFO - +--------+--------------------+--------------------+-------+----------+---------+---------+--------+----+--------+----------+---------+------+-------+
+[2018-01-04 22:57:22,621] {bash_operator.py:94} INFO - |    13.0|2015-01-01 18:10:...|2015-01-01 15:30:...|     AA|         1|        4|        1|    14.0| DFW|   569.0|2015-01-01|     1024|   ABQ|ABQ-DFW|
+[2018-01-04 22:57:22,621] {bash_operator.py:94} INFO - |    17.0|2015-01-01 10:15:...|2015-01-01 07:25:...|     AA|         1|        4|        1|    14.0| DFW|   569.0|2015-01-01|     1184|   ABQ|ABQ-DFW|
+[2018-01-04 22:57:22,621] {bash_operator.py:94} INFO - |    36.0|2015-01-01 11:45:...|2015-01-01 09:00:...|     AA|         1|        4|        1|    -2.0| DFW|   569.0|2015-01-01|      336|   ABQ|ABQ-DFW|
+[2018-01-04 22:57:22,621] {bash_operator.py:94} INFO - |   -21.0|2015-01-01 19:30:...|2015-01-01 17:55:...|     AA|         1|        4|        1|    -1.0| DFW|   731.0|2015-01-01|      125|   ATL|ATL-DFW|
+[2018-01-04 22:57:22,621] {bash_operator.py:94} INFO - |   -14.0|2015-01-01 10:25:...|2015-01-01 08:55:...|     AA|         1|        4|        1|    -4.0| DFW|   731.0|2015-01-01|     1455|   ATL|ATL-DFW|
+[2018-01-04 22:57:22,621] {bash_operator.py:94} INFO - |    16.0|2015-01-01 15:15:...|2015-01-01 13:45:...|     AA|         1|        4|        1|    15.0| DFW|   731.0|2015-01-01|     1473|   ATL|ATL-DFW|
+[2018-01-04 22:57:22,621] {bash_operator.py:94} INFO - +--------+--------------------+--------------------+-------+----------+---------+---------+--------+----+--------+----------+---------+------+-------+
+[2018-01-04 22:57:22,621] {bash_operator.py:94} INFO - only showing top 6 rows
+[2018-01-04 22:57:22,621] {bash_operator.py:94} INFO -
+[2018-01-04 22:57:23,427] {bash_operator.py:94} INFO - +--------+--------------+
+[2018-01-04 22:57:23,427] {bash_operator.py:94} INFO - |ArrDelay|ArrDelayBucket|
+[2018-01-04 22:57:23,428] {bash_operator.py:94} INFO - +--------+--------------+
+[2018-01-04 22:57:23,428] {bash_operator.py:94} INFO - |    13.0|           2.0|
+[2018-01-04 22:57:23,428] {bash_operator.py:94} INFO - |    17.0|           2.0|
+[2018-01-04 22:57:23,428] {bash_operator.py:94} INFO - |    36.0|           3.0|
+[2018-01-04 22:57:23,428] {bash_operator.py:94} INFO - |   -21.0|           0.0|
+[2018-01-04 22:57:23,428] {bash_operator.py:94} INFO - |   -14.0|           1.0|
+[2018-01-04 22:57:23,428] {bash_operator.py:94} INFO - |    16.0|           2.0|
+[2018-01-04 22:57:23,428] {bash_operator.py:94} INFO - |    -7.0|           1.0|
+[2018-01-04 22:57:23,428] {bash_operator.py:94} INFO - |    13.0|           2.0|
+[2018-01-04 22:57:23,428] {bash_operator.py:94} INFO - |    25.0|           2.0|
+[2018-01-04 22:57:23,428] {bash_operator.py:94} INFO - |    58.0|           3.0|
+[2018-01-04 22:57:23,428] {bash_operator.py:94} INFO - |    14.0|           2.0|
+[2018-01-04 22:57:23,428] {bash_operator.py:94} INFO - |     1.0|           2.0|
+[2018-01-04 22:57:23,428] {bash_operator.py:94} INFO - |   -29.0|           0.0|
+[2018-01-04 22:57:23,428] {bash_operator.py:94} INFO - |   -10.0|           1.0|
+[2018-01-04 22:57:23,428] {bash_operator.py:94} INFO - |    -3.0|           1.0|
+[2018-01-04 22:57:23,428] {bash_operator.py:94} INFO - |    -8.0|           1.0|
+[2018-01-04 22:57:23,428] {bash_operator.py:94} INFO - |    -1.0|           1.0|
+[2018-01-04 22:57:23,428] {bash_operator.py:94} INFO - |   -14.0|           1.0|
+[2018-01-04 22:57:23,429] {bash_operator.py:94} INFO - |   -16.0|           0.0|
+[2018-01-04 22:57:23,429] {bash_operator.py:94} INFO - |    18.0|           2.0|
+[2018-01-04 22:57:23,429] {bash_operator.py:94} INFO - +--------+--------------+
+[2018-01-04 22:57:23,429] {bash_operator.py:94} INFO - only showing top 20 rows
+[2018-01-04 22:57:23,429] {bash_operator.py:94} INFO -
+SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".                                                           (0 + 8) / 8]
+[2018-01-04 22:58:23,397] {bash_operator.py:94} INFO - SLF4J: Defaulting to no-operation (NOP) logger implementation
+[2018-01-04 22:58:23,397] {bash_operator.py:94} INFO - SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
++--------+--------------------+--------------------+--------+--------+----------+---------+--------------+--------------------+ 8) / 8]
+[2018-01-04 23:04:36,438] {bash_operator.py:94} INFO - |ArrDelay|          CRSArrTime|          CRSDepTime|DepDelay|Distance|FlightDate|FlightNum|ArrDelayBucket|        Features_vec|
+[2018-01-04 23:04:36,438] {bash_operator.py:94} INFO - +--------+--------------------+--------------------+--------+--------+----------+---------+--------------+--------------------+
+[2018-01-04 23:04:36,438] {bash_operator.py:94} INFO - |    13.0|2015-01-01 18:10:...|2015-01-01 15:30:...|    14.0|   569.0|2015-01-01|     1024|           2.0|[14.0,569.0,2.0,2...|
+[2018-01-04 23:04:36,438] {bash_operator.py:94} INFO - |    17.0|2015-01-01 10:15:...|2015-01-01 07:25:...|    14.0|   569.0|2015-01-01|     1184|           2.0|[14.0,569.0,2.0,2...|
+[2018-01-04 23:04:36,438] {bash_operator.py:94} INFO - |    36.0|2015-01-01 11:45:...|2015-01-01 09:00:...|    -2.0|   569.0|2015-01-01|      336|           3.0|[-2.0,569.0,2.0,2...|
+[2018-01-04 23:04:36,438] {bash_operator.py:94} INFO - |   -21.0|2015-01-01 19:30:...|2015-01-01 17:55:...|    -1.0|   731.0|2015-01-01|      125|           0.0|[-1.0,731.0,2.0,2...|
+[2018-01-04 23:04:36,438] {bash_operator.py:94} INFO - |   -14.0|2015-01-01 10:25:...|2015-01-01 08:55:...|    -4.0|   731.0|2015-01-01|     1455|           1.0|[-4.0,731.0,2.0,2...|
+[2018-01-04 23:04:36,439] {bash_operator.py:94} INFO - |    16.0|2015-01-01 15:15:...|2015-01-01 13:45:...|    15.0|   731.0|2015-01-01|     1473|           2.0|[15.0,731.0,2.0,2...|
+[2018-01-04 23:04:36,439] {bash_operator.py:94} INFO - |    -7.0|2015-01-01 12:15:...|2015-01-01 10:45:...|    -2.0|   731.0|2015-01-01|     1513|           1.0|[-2.0,731.0,2.0,2...|
+[2018-01-04 23:04:36,439] {bash_operator.py:94} INFO - |    13.0|2015-01-01 16:50:...|2015-01-01 15:25:...|     9.0|   731.0|2015-01-01|      194|           2.0|[9.0,731.0,2.0,25...|
+[2018-01-04 23:04:36,439] {bash_operator.py:94} INFO - |    25.0|2015-01-01 20:30:...|2015-01-01 19:00:...|    -2.0|   731.0|2015-01-01|      232|           2.0|[-2.0,731.0,2.0,2...|
+[2018-01-04 23:04:36,439] {bash_operator.py:94} INFO - |    58.0|2015-01-01 21:40:...|2015-01-01 20:15:...|    14.0|   731.0|2015-01-01|      276|           3.0|[14.0,731.0,2.0,2...|
+[2018-01-04 23:04:36,439] {bash_operator.py:94} INFO - |    14.0|2015-01-01 13:25:...|2015-01-01 11:55:...|    15.0|   731.0|2015-01-01|      314|           2.0|[15.0,731.0,2.0,2...|
+[2018-01-04 23:04:36,439] {bash_operator.py:94} INFO - |     1.0|2015-01-01 18:05:...|2015-01-01 16:40:...|    -5.0|   731.0|2015-01-01|      356|           2.0|[-5.0,731.0,2.0,2...|
+[2018-01-04 23:04:36,439] {bash_operator.py:94} INFO - |   -29.0|2015-01-01 10:12:...|2015-01-01 08:15:...|    -9.0|   594.0|2015-01-01|     1652|           0.0|[-9.0,594.0,2.0,2...|
+[2018-01-04 23:04:36,439] {bash_operator.py:94} INFO - |   -10.0|2015-01-01 08:52:...|2015-01-01 07:00:...|    -4.0|   594.0|2015-01-01|       17|           1.0|[-4.0,594.0,2.0,2...|
+[2018-01-04 23:04:36,439] {bash_operator.py:94} INFO - |    -3.0|2015-01-01 23:02:...|2015-01-01 21:10:...|    -7.0|   594.0|2015-01-01|      349|           1.0|[-7.0,594.0,2.0,2...|
+[2018-01-04 23:04:36,439] {bash_operator.py:94} INFO - |    -8.0|2015-01-01 14:35:...|2015-01-01 13:30:...|    -2.0|   190.0|2015-01-01|     1023|           1.0|[-2.0,190.0,2.0,2...|
+[2018-01-04 23:04:36,439] {bash_operator.py:94} INFO - |    -1.0|2015-01-01 06:50:...|2015-01-01 05:50:...|    -2.0|   190.0|2015-01-01|     1178|           1.0|[-2.0,190.0,2.0,2...|
+[2018-01-04 23:04:36,439] {bash_operator.py:94} INFO - |   -14.0|2015-01-01 09:40:...|2015-01-01 08:30:...|    -6.0|   190.0|2015-01-01|     1296|           1.0|[-6.0,190.0,2.0,2...|
+[2018-01-04 23:04:36,440] {bash_operator.py:94} INFO - |   -16.0|2015-01-01 10:15:...|2015-01-01 09:05:...|    -4.0|   190.0|2015-01-01|     1356|           0.0|[-4.0,190.0,2.0,2...|
+[2018-01-04 23:04:36,440] {bash_operator.py:94} INFO - |    18.0|2015-01-01 16:55:...|2015-01-01 15:55:...|     3.0|   190.0|2015-01-01|     1365|           2.0|[3.0,190.0,2.0,25...|
+[2018-01-04 23:04:36,440] {bash_operator.py:94} INFO - +--------+--------------------+--------------------+--------+--------+----------+---------+--------------+--------------------+
+[2018-01-04 23:04:36,440] {bash_operator.py:94} INFO - only showing top 20 rows
+[2018-01-04 23:04:36,440] {bash_operator.py:94} INFO -
+Accuracy = 0.5963976599262725                                                                                              (0 + 8) / 8]
++----------+-------+                                                                                                       (0 + 8) / 8]
+[2018-01-04 23:20:41,915] {bash_operator.py:94} INFO - |Prediction|  count|
+[2018-01-04 23:20:41,915] {bash_operator.py:94} INFO - +----------+-------+
+[2018-01-04 23:20:41,915] {bash_operator.py:94} INFO - |       0.0|  13674|
+[2018-01-04 23:20:41,915] {bash_operator.py:94} INFO - |       1.0|4156473|
+[2018-01-04 23:20:41,915] {bash_operator.py:94} INFO - |       3.0| 567016|
+[2018-01-04 23:20:41,915] {bash_operator.py:94} INFO - |       2.0| 976845|
+[2018-01-04 23:20:41,915] {bash_operator.py:94} INFO - +----------+-------+
+[2018-01-04 23:20:41,916] {bash_operator.py:94} INFO -
++--------+--------------------+--------------------+--------+--------+----------+---------+--------------+--------------------+--------------------+--------------------+----------+
+[2018-01-04 23:22:18,277] {bash_operator.py:94} INFO - |ArrDelay|          CRSArrTime|          CRSDepTime|DepDelay|Distance|FlightDate|FlightNum|ArrDelayBucket|        Features_vec|       rawPrediction|         probability|Prediction|
+[2018-01-04 23:22:18,277] {bash_operator.py:94} INFO - +--------+--------------------+--------------------+--------+--------+----------+---------+--------------+--------------------+--------------------+--------------------+----------+
+[2018-01-04 23:22:18,277] {bash_operator.py:94} INFO - |   -25.0|2015-01-01 11:07:...|2015-01-01 07:30:...|    -4.0|  1237.0|2015-01-01|      569|           0.0|[-4.0,1237.0,7.0,...|[6.54835862768434...|[0.32741793138421...|       1.0|
+[2018-01-04 23:22:18,277] {bash_operator.py:94} INFO - |   -18.0|2015-01-01 09:25:...|2015-01-01 07:39:...|    -5.0|   991.0|2015-01-01|      787|           0.0|[-5.0,991.0,11.0,...|[6.13526337920771...|[0.30676316896038...|       1.0|
+[2018-01-04 23:22:18,278] {bash_operator.py:94} INFO - |   -16.0|2015-01-01 09:00:...|2015-01-01 07:50:...|    -5.0|   236.0|2015-01-01|      474|           0.0|[-5.0,236.0,13.0,...|[2.94304458756905...|[0.14715222937845...|       1.0|
+[2018-01-04 23:22:18,278] {bash_operator.py:94} INFO - |   -22.0|2015-01-01 10:42:...|2015-01-01 08:51:...|     7.0|   537.0|2015-01-01|     5407|           0.0|[7.0,537.0,4.0,25...|[0.98351425607940...|[0.04917571280397...|       2.0|
+[2018-01-04 23:22:18,278] {bash_operator.py:94} INFO - |     7.0|2015-01-01 14:35:...|2015-01-01 11:40:...|    -4.0|  1865.0|2015-01-01|      705|           2.0|[-4.0,1865.0,0.0,...|[6.58678637671991...|[0.32933931883599...|       1.0|
+[2018-01-04 23:22:18,278] {bash_operator.py:94} INFO - |   -12.0|2015-01-01 16:35:...|2015-01-01 15:00:...|     0.0|   444.0|2015-01-01|     2272|           1.0|[0.0,444.0,1.0,25...|[1.90977703384686...|[0.09548885169234...|       1.0|
+[2018-01-04 23:22:18,278] {bash_operator.py:94} INFO - +--------+--------------------+--------------------+--------+--------+----------+---------+--------------+--------------------+--------------------+--------------------+----------+
+[2018-01-04 23:22:18,278] {bash_operator.py:94} INFO - only showing top 6 rows
+[2018-01-04 23:22:18,278] {bash_operator.py:94} INFO -
+[2018-01-04 23:22:18,693] {bash_operator.py:97} INFO - Command exited with return code 0
+vagrant@precise64:~/Agile_Data_Code_2$ airflow test agile_data_science_batch_predictions_daily pyspark_fetch_prediction_requests 2017-12-31
+[2018-01-04 23:22:38,752] {__init__.py:57} INFO - Using executor SequentialExecutor
+[2018-01-04 23:22:39,213] {models.py:167} INFO - Filling up the DagBag from /home/vagrant/airflow/dags
+/home/vagrant/anaconda/lib/python3.5/site-packages/airflow/ti_deps/deps/base_ti_dep.py:94: PendingDeprecationWarning: generator '_get_dep_statuses' raised StopIteration
+  for dep_status in self._get_dep_statuses(ti, session, dep_context):
+/home/vagrant/anaconda/lib/python3.5/site-packages/airflow/models.py:1140: PendingDeprecationWarning: generator 'get_dep_statuses' raised StopIteration
+  dep_context):
+[2018-01-04 23:22:39,658] {models.py:1126} INFO - Dependencies all met for <TaskInstance: agile_data_science_batch_predictions_daily.pyspark_fetch_prediction_requests 2017-12-31 00:00:00 [None]>
+[2018-01-04 23:22:39,661] {models.py:1126} INFO - Dependencies all met for <TaskInstance: agile_data_science_batch_predictions_daily.pyspark_fetch_prediction_requests 2017-12-31 00:00:00 [None]>
+[2018-01-04 23:22:39,661] {models.py:1318} INFO -
+--------------------------------------------------------------------------------
+Starting attempt 1 of 4
+--------------------------------------------------------------------------------
+
+[2018-01-04 23:22:39,662] {models.py:1342} INFO - Executing <Task(BashOperator): pyspark_fetch_prediction_requests> on 2017-12-31 00:00:00
+[2018-01-04 23:22:39,676] {bash_operator.py:71} INFO - tmp dir root location:
+/tmp
+[2018-01-04 23:22:39,677] {bash_operator.py:80} INFO - Temporary script location :/tmp/airflowtmpx1d8gum1//tmp/airflowtmpx1d8gum1/pyspark_fetch_prediction_requestsru4thzor
+[2018-01-04 23:22:39,677] {bash_operator.py:81} INFO - Running command:
+spark-submit --master local[8]   /home/vagrant/Agile_Data_Code_2//ch08/fetch_prediction_requests.py   2017-12-31 /home/vagrant/Agile_Data_Code_2/
+[2018-01-04 23:22:39,681] {bash_operator.py:90} INFO - Output:
+[2018-01-04 23:22:46,731] {bash_operator.py:97} INFO - Command exited with return code 0
+vagrant@precise64:~/Agile_Data_Code_2$ airflow test agile_data_science_batch_predictions_daily pyspark_make_predictions 2017-12-31
+[2018-01-04 23:23:40,622] {__init__.py:57} INFO - Using executor SequentialExecutor
+[2018-01-04 23:23:41,071] {models.py:167} INFO - Filling up the DagBag from /home/vagrant/airflow/dags
+/home/vagrant/anaconda/lib/python3.5/site-packages/airflow/models.py:1140: PendingDeprecationWarning: generator 'get_dep_statuses' raised StopIteration
+  dep_context):
+/home/vagrant/anaconda/lib/python3.5/site-packages/airflow/ti_deps/deps/base_ti_dep.py:94: PendingDeprecationWarning: generator '_get_dep_statuses' raised StopIteration
+  for dep_status in self._get_dep_statuses(ti, session, dep_context):
+[2018-01-04 23:23:41,516] {models.py:1126} INFO - Dependencies all met for <TaskInstance: agile_data_science_batch_predictions_daily.pyspark_make_predictions 2017-12-31 00:00:00 [None]>
+[2018-01-04 23:23:41,518] {models.py:1126} INFO - Dependencies all met for <TaskInstance: agile_data_science_batch_predictions_daily.pyspark_make_predictions 2017-12-31 00:00:00 [None]>
+[2018-01-04 23:23:41,519] {models.py:1318} INFO -
+--------------------------------------------------------------------------------
+Starting attempt 1 of 4
+--------------------------------------------------------------------------------
+
+[2018-01-04 23:23:41,519] {models.py:1342} INFO - Executing <Task(BashOperator): pyspark_make_predictions> on 2017-12-31 00:00:00
+[2018-01-04 23:23:41,534] {bash_operator.py:71} INFO - tmp dir root location:
+/tmp
+[2018-01-04 23:23:41,535] {bash_operator.py:80} INFO - Temporary script location :/tmp/airflowtmpb_4ms99k//tmp/airflowtmpb_4ms99k/pyspark_make_predictions0o2yajtw
+[2018-01-04 23:23:41,535] {bash_operator.py:81} INFO - Running command:
+spark-submit --master local[8]   /home/vagrant/Agile_Data_Code_2//ch08/make_predictions.py   2017-12-31 /home/vagrant/Agile_Data_Code_2/
+[2018-01-04 23:23:41,539] {bash_operator.py:90} INFO - Output:
+[2018-01-04 23:23:46,927] {bash_operator.py:94} INFO - SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+[2018-01-04 23:23:46,927] {bash_operator.py:94} INFO - SLF4J: Defaulting to no-operation (NOP) logger implementation
+[2018-01-04 23:23:46,928] {bash_operator.py:94} INFO - SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
++-------+----------+---------+---------+--------+----+--------+----------+---------+------+--------------------+           (1 + 7) / 8]
+[2018-01-04 23:23:55,397] {bash_operator.py:94} INFO - |Carrier|DayOfMonth|DayOfWeek|DayOfYear|DepDelay|Dest|Distance|FlightDate|FlightNum|Origin|           Timestamp|
+[2018-01-04 23:23:55,397] {bash_operator.py:94} INFO - +-------+----------+---------+---------+--------+----+--------+----------+---------+------+--------------------+
+[2018-01-04 23:23:55,397] {bash_operator.py:94} INFO - |     AA|        23|        4|      358|     5.0| ATL|  2139.0|2016-12-23|     1519|   SFO|2017-12-31 05:51:...|
+[2018-01-04 23:23:55,397] {bash_operator.py:94} INFO - +-------+----------+---------+---------+--------+----+--------+----------+---------+------+--------------------+
+[2018-01-04 23:23:55,397] {bash_operator.py:94} INFO -
+[2018-01-04 23:23:55,589] {bash_operator.py:94} INFO - +-------+----------+---------+---------+--------+----+--------+----------+---------+------+--------------------+-------+
+[2018-01-04 23:23:55,589] {bash_operator.py:94} INFO - |Carrier|DayOfMonth|DayOfWeek|DayOfYear|DepDelay|Dest|Distance|FlightDate|FlightNum|Origin|           Timestamp|  Route|
+[2018-01-04 23:23:55,589] {bash_operator.py:94} INFO - +-------+----------+---------+---------+--------+----+--------+----------+---------+------+--------------------+-------+
+[2018-01-04 23:23:55,589] {bash_operator.py:94} INFO - |     AA|        23|        4|      358|     5.0| ATL|  2139.0|2016-12-23|     1519|   SFO|2017-12-31 05:51:...|SFO-ATL|
+[2018-01-04 23:23:55,589] {bash_operator.py:94} INFO - +-------+----------+---------+---------+--------+----+--------+----------+---------+------+--------------------+-------+
+[2018-01-04 23:23:55,589] {bash_operator.py:94} INFO -
+[2018-01-04 23:23:56,308] {bash_operator.py:94} INFO - +-------+----------+---------+---------+--------+----+--------+----------+---------+------+--------------------+-------+--------------------+
+[2018-01-04 23:23:56,308] {bash_operator.py:94} INFO - |Carrier|DayOfMonth|DayOfWeek|DayOfYear|DepDelay|Dest|Distance|FlightDate|FlightNum|Origin|           Timestamp|  Route|        Features_vec|
+[2018-01-04 23:23:56,308] {bash_operator.py:94} INFO - +-------+----------+---------+---------+--------+----+--------+----------+---------+------+--------------------+-------+--------------------+
+[2018-01-04 23:23:56,308] {bash_operator.py:94} INFO - |     AA|        23|        4|      358|     5.0| ATL|  2139.0|2016-12-23|     1519|   SFO|2017-12-31 05:51:...|SFO-ATL|[5.0,2139.0,2.0,8...|
+[2018-01-04 23:23:56,308] {bash_operator.py:94} INFO - +-------+----------+---------+---------+--------+----+--------+----------+---------+------+--------------------+-------+--------------------+
+[2018-01-04 23:23:56,309] {bash_operator.py:94} INFO -
+[2018-01-04 23:23:56,939] {bash_operator.py:94} INFO - +-------+----------+---------+---------+--------+----+--------+----------+---------+------+--------------------+-------+----------+
+[2018-01-04 23:23:56,940] {bash_operator.py:94} INFO - |Carrier|DayOfMonth|DayOfWeek|DayOfYear|DepDelay|Dest|Distance|FlightDate|FlightNum|Origin|           Timestamp|  Route|Prediction|
+[2018-01-04 23:23:56,940] {bash_operator.py:94} INFO - +-------+----------+---------+---------+--------+----+--------+----------+---------+------+--------------------+-------+----------+
+[2018-01-04 23:23:56,940] {bash_operator.py:94} INFO - |     AA|        23|        4|      358|     5.0| ATL|  2139.0|2016-12-23|     1519|   SFO|2017-12-31 05:51:...|SFO-ATL|       1.0|
+[2018-01-04 23:23:56,940] {bash_operator.py:94} INFO - +-------+----------+---------+---------+--------+----+--------+----------+---------+------+--------------------+-------+----------+
+[2018-01-04 23:23:56,940] {bash_operator.py:94} INFO -
+[2018-01-04 23:23:58,038] {bash_operator.py:97} INFO - Command exited with return code 0
+vagrant@precise64:~/Agile_Data_Code_2$
+vagrant@precise64:~/Agile_Data_Code_2$ airflow backfill -s 2017-12-31 -e 2017-12-31 agile_data_science_batch_prediction_model_training
+[2018-01-04 23:24:42,337] {__init__.py:57} INFO - Using executor SequentialExecutor
+[2018-01-04 23:24:42,762] {models.py:167} INFO - Filling up the DagBag from /home/vagrant/airflow/dags
+/home/vagrant/anaconda/lib/python3.5/site-packages/airflow/ti_deps/deps/base_ti_dep.py:94: PendingDeprecationWarning: generator '_get_dep_statuses' raised StopIteration
+  for dep_status in self._get_dep_statuses(ti, session, dep_context):
+[2018-01-04 23:24:43,229] {models.py:1126} INFO - Dependencies all met for <TaskInstance: agile_data_science_batch_prediction_model_training.pyspark_extract_features 2017-12-31 00:00:00 [scheduled]>
+[2018-01-04 23:24:43,232] {base_executor.py:50} INFO - Adding to queue: airflow run agile_data_science_batch_prediction_model_training pyspark_extract_features 2017-12-31T00:00:00 --local -sd DAGS_FOLDER/setup.py
+[2018-01-04 23:24:43,244] {models.py:1120} INFO - Dependencies not met for <TaskInstance: agile_data_science_batch_prediction_model_training.pyspark_train_classifier_model 2017-12-31 00:00:00 [scheduled]>, dependency 'Trigger Rule' FAILED: Task's trigger rule 'all_success' requires all upstream tasks to have succeeded, but found 1 non-success(es). upstream_tasks_state={'successes': 0, 'skipped': 0, 'upstream_failed': 0, 'done': 0, 'failed': 0}, upstream_task_ids=['pyspark_extract_features']
+[2018-01-04 23:24:48,128] {sequential_executor.py:40} INFO - Executing command: airflow run agile_data_science_batch_prediction_model_training pyspark_extract_features 2017-12-31T00:00:00 --local -sd DAGS_FOLDER/setup.py
+[2018-01-04 23:24:48,569] {__init__.py:57} INFO - Using executor SequentialExecutor
+Logging into: /home/vagrant/airflow/logs/agile_data_science_batch_prediction_model_training/pyspark_extract_features/2017-12-31T00:00:00
+[2018-01-04 23:45:25,761] {models.py:4024} INFO - Updating state for <DagRun agile_data_science_batch_prediction_model_training @ 2017-12-31 00:00:00: backfill_2017-12-31T00:00:00, externally triggered: False> considering 2 task(s)
+[2018-01-04 23:45:25,798] {jobs.py:1978} INFO - [backfill progress] | finished run 0 of 1 | tasks waiting: 1 | succeeded: 1 | kicked_off: 0 | failed: 0 | skipped: 0 | deadlocked: 0 | not ready: 1
+[2018-01-04 23:45:25,807] {models.py:1126} INFO - Dependencies all met for <TaskInstance: agile_data_science_batch_prediction_model_training.pyspark_train_classifier_model 2017-12-31 00:00:00 [scheduled]>
+[2018-01-04 23:45:25,812] {base_executor.py:50} INFO - Adding to queue: airflow run agile_data_science_batch_prediction_model_training pyspark_train_classifier_model 2017-12-31T00:00:00 --local -sd DAGS_FOLDER/setup.py
+[2018-01-04 23:45:25,830] {sequential_executor.py:40} INFO - Executing command: airflow run agile_data_science_batch_prediction_model_training pyspark_train_classifier_model 2017-12-31T00:00:00 --local -sd DAGS_FOLDER/setup.py
+[2018-01-04 23:45:27,192] {__init__.py:57} INFO - Using executor SequentialExecutor
+Logging into: /home/vagrant/airflow/logs/agile_data_science_batch_prediction_model_training/pyspark_train_classifier_model/2017-12-31T00:00:00
+[2018-01-05 00:24:21,555] {models.py:4024} INFO - Updating state for <DagRun agile_data_science_batch_prediction_model_training @ 2017-12-31 00:00:00: backfill_2017-12-31T00:00:00, externally triggered: False> considering 2 task(s)
+[2018-01-05 00:24:21,557] {models.py:4070} INFO - Marking run <DagRun agile_data_science_batch_prediction_model_training @ 2017-12-31 00:00:00: backfill_2017-12-31T00:00:00, externally triggered: False> successful
+[2018-01-05 00:24:21,567] {jobs.py:1978} INFO - [backfill progress] | finished run 1 of 1 | tasks waiting: 0 | succeeded: 2 | kicked_off: 0 | failed: 0 | skipped: 0 | deadlocked: 0 | not ready: 0
+[2018-01-05 00:24:21,567] {jobs.py:2023} INFO - Backfill done. Exiting.
+vagrant@precise64:~/Agile_Data_Code_2$
+vagrant@precise64:~/Agile_Data_Code_2$
+vagrant@precise64:~/Agile_Data_Code_2$
+vagrant@precise64:~/Agile_Data_Code_2$ airflow backfill -s 2017-12-31 -e 2017-12-31 agile_data_science_batch_predictions_daily
+[2018-01-05 03:53:08,026] {__init__.py:57} INFO - Using executor SequentialExecutor
+[2018-01-05 03:53:08,402] {models.py:167} INFO - Filling up the DagBag from /home/vagrant/airflow/dags
+/home/vagrant/anaconda/lib/python3.5/site-packages/airflow/ti_deps/deps/base_ti_dep.py:94: PendingDeprecationWarning: generator '_get_dep_statuses' raised StopIteration
+  for dep_status in self._get_dep_statuses(ti, session, dep_context):
+[2018-01-05 03:53:08,831] {models.py:1126} INFO - Dependencies all met for <TaskInstance: agile_data_science_batch_predictions_daily.pyspark_fetch_prediction_requests 2017-12-31 00:00:00 [scheduled]>
+[2018-01-05 03:53:08,835] {base_executor.py:50} INFO - Adding to queue: airflow run agile_data_science_batch_predictions_daily pyspark_fetch_prediction_requests 2017-12-31T00:00:00 --local -sd DAGS_FOLDER/setup.py
+[2018-01-05 03:53:08,845] {models.py:1120} INFO - Dependencies not met for <TaskInstance: agile_data_science_batch_predictions_daily.pyspark_make_predictions 2017-12-31 00:00:00 [scheduled]>, dependency 'Trigger Rule' FAILED: Task's trigger rule 'all_success' requires all upstream tasks to have succeeded, but found 1 non-success(es). upstream_tasks_state={'failed': 0, 'done': 0, 'skipped': 0, 'upstream_failed': 0, 'successes': 0}, upstream_task_ids=['pyspark_fetch_prediction_requests']
+[2018-01-05 03:53:08,852] {models.py:1120} INFO - Dependencies not met for <TaskInstance: agile_data_science_batch_predictions_daily.pyspark_load_prediction_results 2017-12-31 00:00:00 [scheduled]>, dependency 'Trigger Rule' FAILED: Task's trigger rule 'all_success' requires all upstream tasks to have succeeded, but found 1 non-success(es). upstream_tasks_state={'failed': 0, 'done': 0, 'skipped': 0, 'upstream_failed': 0, 'successes': 0}, upstream_task_ids=['pyspark_make_predictions']
+[2018-01-05 03:53:13,795] {sequential_executor.py:40} INFO - Executing command: airflow run agile_data_science_batch_predictions_daily pyspark_fetch_prediction_requests 2017-12-31T00:00:00 --local -sd DAGS_FOLDER/setup.py
+[2018-01-05 03:53:14,252] {__init__.py:57} INFO - Using executor SequentialExecutor
+Logging into: /home/vagrant/airflow/logs/agile_data_science_batch_predictions_daily/pyspark_fetch_prediction_requests/2017-12-31T00:00:00
+[2018-01-05 03:53:25,134] {models.py:4024} INFO - Updating state for <DagRun agile_data_science_batch_predictions_daily @ 2017-12-31 00:00:00: backfill_2017-12-31T00:00:00, externally triggered: False> considering 3 task(s)
+[2018-01-05 03:53:25,149] {jobs.py:1978} INFO - [backfill progress] | finished run 0 of 1 | tasks waiting: 2 | succeeded: 1 | kicked_off: 0 | failed: 0 | skipped: 0 | deadlocked: 0 | not ready: 2
+[2018-01-05 03:53:25,160] {models.py:1126} INFO - Dependencies all met for <TaskInstance: agile_data_science_batch_predictions_daily.pyspark_make_predictions 2017-12-31 00:00:00 [scheduled]>
+[2018-01-05 03:53:25,165] {base_executor.py:50} INFO - Adding to queue: airflow run agile_data_science_batch_predictions_daily pyspark_make_predictions 2017-12-31T00:00:00 --local -sd DAGS_FOLDER/setup.py
+[2018-01-05 03:53:25,183] {models.py:1120} INFO - Dependencies not met for <TaskInstance: agile_data_science_batch_predictions_daily.pyspark_load_prediction_results 2017-12-31 00:00:00 [scheduled]>, dependency 'Trigger Rule' FAILED: Task's trigger rule 'all_success' requires all upstream tasks to have succeeded, but found 1 non-success(es). upstream_tasks_state={'failed': 0, 'done': 0, 'skipped': 0, 'upstream_failed': 0, 'successes': 0}, upstream_task_ids=['pyspark_make_predictions']
+[2018-01-05 03:53:25,196] {sequential_executor.py:40} INFO - Executing command: airflow run agile_data_science_batch_predictions_daily pyspark_make_predictions 2017-12-31T00:00:00 --local -sd DAGS_FOLDER/setup.py
+[2018-01-05 03:53:25,864] {__init__.py:57} INFO - Using executor SequentialExecutor
+Logging into: /home/vagrant/airflow/logs/agile_data_science_batch_predictions_daily/pyspark_make_predictions/2017-12-31T00:00:00
+[2018-01-05 03:53:46,795] {models.py:4024} INFO - Updating state for <DagRun agile_data_science_batch_predictions_daily @ 2017-12-31 00:00:00: backfill_2017-12-31T00:00:00, externally triggered: False> considering 3 task(s)
+[2018-01-05 03:53:46,805] {jobs.py:1978} INFO - [backfill progress] | finished run 0 of 1 | tasks waiting: 1 | succeeded: 2 | kicked_off: 0 | failed: 0 | skipped: 0 | deadlocked: 0 | not ready: 1
+[2018-01-05 03:53:46,813] {models.py:1126} INFO - Dependencies all met for <TaskInstance: agile_data_science_batch_predictions_daily.pyspark_load_prediction_results 2017-12-31 00:00:00 [scheduled]>
+[2018-01-05 03:53:46,817] {base_executor.py:50} INFO - Adding to queue: airflow run agile_data_science_batch_predictions_daily pyspark_load_prediction_results 2017-12-31T00:00:00 --local -sd DAGS_FOLDER/setup.py
+[2018-01-05 03:53:46,835] {sequential_executor.py:40} INFO - Executing command: airflow run agile_data_science_batch_predictions_daily pyspark_load_prediction_results 2017-12-31T00:00:00 --local -sd DAGS_FOLDER/setup.py
+[2018-01-05 03:53:47,294] {__init__.py:57} INFO - Using executor SequentialExecutor
+Logging into: /home/vagrant/airflow/logs/agile_data_science_batch_predictions_daily/pyspark_load_prediction_results/2017-12-31T00:00:00
+[2018-01-05 03:53:58,119] {models.py:4024} INFO - Updating state for <DagRun agile_data_science_batch_predictions_daily @ 2017-12-31 00:00:00: backfill_2017-12-31T00:00:00, externally triggered: False> considering 3 task(s)
+[2018-01-05 03:53:58,122] {models.py:4070} INFO - Marking run <DagRun agile_data_science_batch_predictions_daily @ 2017-12-31 00:00:00: backfill_2017-12-31T00:00:00, externally triggered: False> successful
+[2018-01-05 03:53:58,133] {jobs.py:1978} INFO - [backfill progress] | finished run 1 of 1 | tasks waiting: 0 | succeeded: 3 | kicked_off: 0 | failed: 0 | skipped: 0 | deadlocked: 0 | not ready: 0
+[2018-01-05 03:53:58,134] {jobs.py:2023} INFO - Backfill done. Exiting.
+vagrant@precise64:~/Agile_Data_Code_2$
+
+_____________________________________________
+Sending Prediction Requests to Kafka
+_____________________________________________
+
+Last login: Mon Jan 15 22:44:16 2018 from 10.0.2.2
+vagrant@precise64:~$ cd Agile_Data_Code_2
+vagrant@precise64:~/Agile_Data_Code_2$ kafka/bin/zookeeper-server-start.sh kafka/config/zookeeper.properties-bash: kafka/bin/zookeeper-server-start.sh: No such file or directory
+vagrant@precise64:~/Agile_Data_Code_2$ cd
+vagrant@precise64:~$ kafka/bin/zookeeper-server-start.sh kafka/config/zookeeper.properties
+
+Last login: Tue Jan 16 06:37:01 2018 from 10.0.2.2
+vagrant@precise64:~$ kafka/bin/kafka-server-start.sh kafka/config/server.properties
+
+Last login: Tue Jan 16 06:40:08 2018 from 10.0.2.2
+vagrant@precise64:~$
+vagrant@precise64:~$ kafka/bin/kafka-topics.sh --list --zookeeper localhost:2181
+__consumer_offsets
+flight_delay_classification_request
+vagrant@precise64:~$
+vagrant@precise64:~$ kafka/bin/kafka-console-consumer.sh \
+>     --bootstrap-server localhost:9092 \
+>     --topic flight_delay_classification_request \
+>     --from-beginning
+
+
+Last login: Tue Jan 16 06:48:20 2018 from 10.0.2.2
+vagrant@precise64:~$ mongo agile_data_science
+MongoDB shell version: 2.0.4
+connecting to: agile_data_science
+> db.flight_delay_classification_response.find().pretty()
+{
+        "_id" : ObjectId("5a530c74628744166de657a7"),
+        "id" : "EXAMPLE_UUID_g3t03qtq3t",
+        "prediction" : {
+                "test" : "data"
+        }
+}
+> db.flight_delay_classification_response.find_one("id": "EXAMPLE_UUID_g3t03qtq3t")
+Tue Jan 16 17:02:51 SyntaxError: missing ) after argument list (shell):1
+> db.flight_delay_classification_response.find_one({"id": "EXAMPLE_UUID_g3t03qtq3t"})
+Tue Jan 16 17:03:27 TypeError: db.flight_delay_classification_response.find_one is not a function (shell):1
+> db.flight_delay_classification_response.find({"id": "EXAMPLE_UUID_g3t03qtq3t"})
+{ "_id" : ObjectId("5a530c74628744166de657a7"), "id" : "EXAMPLE_UUID_g3t03qtq3t", "prediction" : { "test" : "data" } }
+>
+
+Last login: Tue Jan 16 06:46:28 2018 from 10.0.2.2
+vagrant@precise64:~$ curl -XPOST 'http://localhost:5000/flights/delays/predict/classify_realtime' \
+>     -F 'DepDelay=5.0' \
+>     -F 'Carrier=AA' \
+>     -F 'FlightDate=2016-12-23' \
+>     -F 'Dest=ATL' \
+>     -F 'FlightNum=1519' \
+>     -F 'Origin=SFO' | json_pp
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   711  100    62  100   649   4418  46248 --:--:-- --:--:-- --:--:-- 49923
+{
+   "status" : "OK",
+   "id" : "f1ed0ad5-f8af-40b0-9e2e-9c8a2bb469fb"
+}
+vagrant@precise64:~$ curl -XPOST 'http://localhost:5000/flights/delays/predict/classify_realtime'     -F 'DepDelay=50.0'     -F 'Carrier=DL'     -F 'FlightDate=2018-12-23'     -F 'Dest=ATL'     -F 'FlightNum=1519'     -F 'Origin=SFO' | json_pp
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   712  100    62  100   650   9467  99251 --:--:-- --:--:-- --:--:--  105k
+{
+   "status" : "OK",
+   "id" : "85df5750-7b1f-4d58-a4e9-b3157ef32840"
+}
+vagrant@precise64:~$ curl 'http://localhost:5000/flights/delays/predict/classify_realtime/response/EXAMPLE_UUID_g3t03qtq3t' | json_pp
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100    51  100    51    0     0   6150      0 --:--:-- --:--:-- --:--:--  7285
+{
+   "status" : "WAIT",
+   "id" : "EXAMPLE_UUID_g3t03qtq3t"
+}
+vagrant@precise64:~$ curl 'http://localhost:5000/flights/delays/predict/classify_realtime/response/EXAMPLE_UUID_g3t03qtq3t' | json_pp
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100    51  100    51    0     0   4312      0 --:--:-- --:--:-- --:--:--  4636
+{
+   "status" : "WAIT",
+   "id" : "EXAMPLE_UUID_g3t03qtq3t"
+}
+vagrant@precise64:~$ curl 'http://localhost:5000/flights/delays/predict/classify_realtime/response/EXAMPLE_UUID_g3t03qtq3t' | json_pp
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   175  100   175    0     0  15027      0 --:--:-- --:--:-- --:--:-- 19444
+{
+   "status" : "OK",
+   "prediction" : {
+      "_id" : {
+         "$oid" : "5a530c74628744166de657a7"
+      },
+      "prediction" : {
+         "test" : "data"
+      },
+      "id" : "EXAMPLE_UUID_g3t03qtq3t"
+   },
+   "id" : "EXAMPLE_UUID_g3t03qtq3t"
+}
+vagrant@precise64:~$
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,28 @@
+on_time_dataframe = spark.read.format('com.databricks.spark.csv').options(header='true',
+    treatEmptyValuesAsNulls='true',).load('data/On_Time_On_Time_Performance_2015.csv.bz2')
+
+http://localhost:5000/on_time_performance?Carrier=AA&FlightDate=2015-07-14&FlightNum=269
+http://localhost:5000/on_time_performance%3FCarrier%3DAA%26FlightDate%3D2015-07-14%26FlightNum%3D269
+http://localhost:5000/on_time_performance/AA/2015-07-14/269
+Carrier: 'AA', FlightDate: '2015-07-14', FlightNum: '269'
+
+ flight = client.agile_data_science.on_time_performance.find_one({'Carrier': 'AA', 'FlightDate': '2015-07-14', 'FlightNum': '269'})
+
+http://localhost:5000/flights/SMF/DFW/2015-07-14
+http://localhost:5000/flights/JFK/LAX/2015-01-01?start=20&end=40
+
+localhost:5000/flights/search?Carrier=&Origin=JFK&Dest=LAX&FlightDate=2015-02-01&TailNum=&FlightNum=
+
+curl 'localhost:9200/agile_data_science/on_time_performance/_search?q=Origin:ATL&pretty'
+
+curl -XGET "localhost:9200/agile_data_science/on_time_performance/_search" -d'
+{
+  "query": {"bool": {"must": [{"match": {"FlightDate": "2015-02-01"}}, {"match": {"Origin": "JFK"}}, {"match": {"Dest": "LAX"}}]}}, "size": 20, "from": 0, "sort": [{"FlightDate": {"ignore_unmapped": true, "order": "asc"}}, {"DepTime": {"ignore_unmapped": true, "order": "asc"}}, {"Carrier": {"ignore_unmapped": true, "order": "asc"}}, {"FlightNum": {"ignore_unmapped": true, "order": "asc"}}, "_score"]
+}'
+
+
+
+curl -XGET "localhost:9200/agile_data_science/on_time_performance/_search" -d'
+{
+  "query": {"bool": {"must": [{"match": {"FlightDate": "2015-02-01"}}, {"match": {"Origin": "JFK"}}, {"match": {"Dest": "LAX"}}]}}, "size": 20, "from": 0, "sort": [{"FlightDate": {"order": "asc"}}, {"DepTime": {"order": "asc"}}, {"Carrier": {"order": "asc"}}, {"FlightNum": {"order": "asc"}}, "_score"]
+}'

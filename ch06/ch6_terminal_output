@@ -1,0 +1,753 @@
+Last login: Wed Aug  9 23:25:13 2017 from 10.0.2.2
+vagrant@precise64:~$ cd Agile_Data_Code_2
+vagrant@precise64:~/Agile_Data_Code_2$ PYSPARK_DRIVER_PYTHON=ipython pyspark
+Python 3.5.3 |Continuum Analytics, Inc.| (default, Mar  6 2017, 11:58:13)
+[GCC 4.4.7 20120313 (Red Hat 4.4.7-1)] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+17/08/10 06:11:59 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+17/08/10 06:11:59 WARN Utils: Your hostname, precise64 resolves to a loopback address: 127.0.1.1; using 10.0.2.15 instead (on interface eth0)
+17/08/10 06:11:59 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address
+Welcome to
+      ____              __
+     / __/__  ___ _____/ /__
+    _\ \/ _ \/ _ `/ __/  '_/
+   /__ / .__/\_,_/_/ /_/\_\   version 2.1.0
+      /_/
+
+Using Python version 3.5.3 (default, Mar  6 2017 11:58:13)
+SparkSession available as 'spark'.
+>>> on_time_dataframe = spark.read.parquet('data/on_time_performance.parquet')
+SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+SLF4J: Defaulting to no-operation (NOP) logger implementation
+SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+>>> on_time_dataframe.registerTempTable("on_time_performance")
+>>> carrier_codes = spark.sql(
+...   "SELECT DISTINCT Carrier FROM on_time_performance"
+...   )
+>>> carrier_codes.collect()
+17/08/10 06:13:54 WARN Utils: Truncated the string representation of a plan since it was too large. This behavior can be adjusted by setting 'spark.debug.maxToStringFields' in SparkEnv.conf.
+[Row(Carrier='UA'), Row(Carrier='NK'), Row(Carrier='AA'), Row(Carrier='EV'), Row(Carrier='B6'), Row(Carrier='DL'), Row(Carrier='OO'), Row(Carrier='F9'), Row(Carrier='US'), Row(Carrier='MQ'), Row(Carrier='HA'), Row(Carrier='AS'), Row(Carrier='VX'), Row(Carrier='WN')]
+>>> from pyspark.sql.types import StringType, IntegerType
+>>> from pyspark.sql.types import StructType, StructField
+>>> schema = StructType([
+...   StructField("ID", IntegerType(), True),  # "ArrDelay":5.0
+...   StructField("Name", StringType(), True),  # "CRSArrTime":"2015-12-31T03:20:00.000-08:00"
+...   StructField("Alias", StringType(), True),  # "CRSDepTime":"2015-12-31T03:05:00.000-08:00"
+...   StructField("IATA", StringType(), True),  # "Carrier":"WN"
+...   StructField("ICAO", StringType(), True),  # "DayOfMonth":31
+...   StructField("CallSign", StringType(), True),  # "DayOfWeek":4
+...   StructField("Country", StringType(), True),  # "DayOfYear":365
+...   StructField("Active", StringType(), True),  # "DepDelay":14.0
+... ])
+>>> airlines = spark.read.format('com.databricks.spark.csv')\
+...   .options(header='false', nullValue='\\N')\
+...   .schema(schema)\
+...   .load('data/airlines.csv')
+>>> type(airlines)
+<class 'pyspark.sql.dataframe.DataFrame'>
+>>> airlines.show()
++---+--------------------+-----+----+----+--------------+--------------+------+
+| ID|                Name|Alias|IATA|ICAO|      CallSign|       Country|Active|
++---+--------------------+-----+----+----+--------------+--------------+------+
+| -1|             Unknown| null|   -| N/A|          null|          null|     Y|
+|  1|      Private flight| null|   -| N/A|          null|          null|     Y|
+|  2|         135 Airways| null|null| GNL|       GENERAL| United States|     N|
+|  3|       1Time Airline| null|  1T| RNX|       NEXTIME|  South Africa|     Y|
+|  4|2 Sqn No 1 Elemen...| null|null| WYT|          null|United Kingdom|     N|
+|  5|     213 Flight Unit| null|null| TFU|          null|        Russia|     N|
+|  6|223 Flight Unit S...| null|null| CHD|CHKALOVSK-AVIA|        Russia|     N|
+|  7|   224th Flight Unit| null|null| TTF|    CARGO UNIT|        Russia|     N|
+|  8|         247 Jet Ltd| null|null| TWF|  CLOUD RUNNER|United Kingdom|     N|
+|  9|         3D Aviation| null|null| SEC|       SECUREX| United States|     N|
+| 10|         40-Mile Air| null|  Q5| MLA|      MILE-AIR| United States|     Y|
+| 11|              4D Air| null|null| QRT|       QUARTET|      Thailand|     N|
+| 12|611897 Alberta Li...| null|null| THD|         DONUT|        Canada|     N|
+| 13|    Ansett Australia| null|  AN| AAA|        ANSETT|     Australia|     Y|
+| 14|Abacus International| null|  1B|null|          null|     Singapore|     Y|
+| 15|     Abelag Aviation| null|  W9| AAB|           ABG|       Belgium|     N|
+| 16|      Army Air Corps| null|null| AAC|       ARMYAIR|United Kingdom|     N|
+| 17|Aero Aviation Cen...| null|null| AAD|       SUNRISE|        Canada|     N|
+| 18|Aero Servicios Ej...| null|null| SII|        ASEISA|        Mexico|     N|
+| 19|         Aero Biniza| null|null| BZS|        BINIZA|        Mexico|     N|
++---+--------------------+-----+----+----+--------------+--------------+------+
+only showing top 20 rows
+
+>>> airlines.filter(airlines.IATA == 'DL').show()
++----+---------------+-----+----+----+--------+-------------+------+
+|  ID|           Name|Alias|IATA|ICAO|CallSign|      Country|Active|
++----+---------------+-----+----+----+--------+-------------+------+
+|2009|Delta Air Lines| null|  DL| DAL|   DELTA|United States|     Y|
++----+---------------+-----+----+----+--------+-------------+------+
+
+>>>
+>>> airlines.registerTempTable("airlines")
+>>> airlines = spark.sql("SELECT Name, IATA AS CarrierCode from airlines")
+>>> airlines.show()
++--------------------+-----------+
+|                Name|CarrierCode|
++--------------------+-----------+
+|             Unknown|          -|
+|      Private flight|          -|
+|         135 Airways|       null|
+|       1Time Airline|         1T|
+|2 Sqn No 1 Elemen...|       null|
+|     213 Flight Unit|       null|
+|223 Flight Unit S...|       null|
+|   224th Flight Unit|       null|
+|         247 Jet Ltd|       null|
+|         3D Aviation|       null|
+|         40-Mile Air|         Q5|
+|              4D Air|       null|
+|611897 Alberta Li...|       null|
+|    Ansett Australia|         AN|
+|Abacus International|         1B|
+|     Abelag Aviation|         W9|
+|      Army Air Corps|       null|
+|Aero Aviation Cen...|       null|
+|Aero Servicios Ej...|       null|
+|         Aero Biniza|       null|
++--------------------+-----------+
+only showing top 20 rows
+
+>>> carrier_codes.show()
++-------+
+|Carrier|
++-------+
+|     UA|
+|     NK|
+|     AA|
+|     EV|
+|     B6|
+|     DL|
+|     OO|
+|     F9|
+|     US|
+|     MQ|
+|     HA|
+|     AS|
+|     VX|
+|     WN|
++-------+
+
+>>> our_airlines = carrier_codes.join(airlines, carrier_codes.Carrier == airlines.CarrierCode)
+>>> our_airlines = our_airlines.select('Name', 'CarrierCode')
+>>> our_airlines.show()
++--------------------+-----------+
+|                Name|CarrierCode|
++--------------------+-----------+
+|     United Airlines|         UA|
+|     Spirit Airlines|         NK|
+|   American Airlines|         AA|
+|Atlantic Southeas...|         EV|
+|     JetBlue Airways|         B6|
+|     Delta Air Lines|         DL|
+|             SkyWest|         OO|
+|   Frontier Airlines|         F9|
+|          US Airways|         US|
+|American Eagle Ai...|         MQ|
+|   Hawaiian Airlines|         HA|
+|     Alaska Airlines|         AS|
+|      Virgin America|         VX|
+|  Southwest Airlines|         WN|
++--------------------+-----------+
+
+>>> our_airlines.repartition(1).write.mode("overwrite").json("data/our_airlines.json")
+>>> os.system("cp data/our_airlines.json/part* data/our_airlines.jsonl")
+0
+>>> os.system("cat data/our_airlines.jsonl")
+{"Name":"United Airlines","CarrierCode":"UA"}
+{"Name":"Spirit Airlines","CarrierCode":"NK"}
+{"Name":"American Airlines","CarrierCode":"AA"}
+{"Name":"Atlantic Southeast Airlines","CarrierCode":"EV"}
+{"Name":"JetBlue Airways","CarrierCode":"B6"}
+{"Name":"Delta Air Lines","CarrierCode":"DL"}
+{"Name":"SkyWest","CarrierCode":"OO"}
+{"Name":"Frontier Airlines","CarrierCode":"F9"}
+{"Name":"US Airways","CarrierCode":"US"}
+{"Name":"American Eagle Airlines","CarrierCode":"MQ"}
+{"Name":"Hawaiian Airlines","CarrierCode":"HA"}
+{"Name":"Alaska Airlines","CarrierCode":"AS"}
+{"Name":"Virgin America","CarrierCode":"VX"}
+{"Name":"Southwest Airlines","CarrierCode":"WN"}
+0
+>>>
+
+Last login: Thu Aug 10 21:43:11 2017 from 10.0.2.2
+vagrant@precise64:~$ cd Agile_Data_Code_2
+vagrant@precise64:~/Agile_Data_Code_2$ mongoimport -d agile_data_science -c airlines --file data/our_airlines_with_wiki.jsonl
+connected to: 127.0.0.1
+imported 14 objects
+vagrant@precise64:~/Agile_Data_Code_2$ mongo agile_data_science
+MongoDB shell version: 2.0.4
+connecting to: agile_data_science
+> db.airlines.findOne()
+{
+        "_id" : ObjectId("598cf0e0e1a63a3b7f6f082b"),
+        "Name" : "United Airlines",
+        "CarrierCode" : "UA",
+        "url" : "https://www.united.com",
+        "logo_url" : "http://upload.wikimedia.org/wikipedia/en/thumb/e/e0/United_Airlines_Logo.svg/300px-United_Airlines_Logo.svg.png",
+        "domain" : "united.com",
+        "summary" : "United Airlines, Inc., commonly referred to as United, is a major American airline headquartered in Chicago, Illinois. It is the world's third-largest airline when measured by revenue, after American Airlines and Delta Air Lines. United operates a large domestic and international route network, with an extensive presence in the Asia-Pacific region. United is a founding member of Star Alliance, the world's largest airline alliance. Regional service is operated by independent carriers under the brand name United Express. Its main competitors are American Airlines, Delta Air Lines, and Southwest Airlines.\nUnited was founded in 1926 as Varney Air Lines and was later known as United Air Lines (UAL). Just prior to the use of the United Airlines name, The Boeing Company operated a predecessor airline.\nUnited operates out of nine airline hubs located in Chicago, Denver, Guam, Houston, Los Angeles, Newark, San Francisco, Tokyo and Washington, D.C. Chicago-O'Hare is United's largest hub, both in terms of passengers carried annually (16.8 million in 2016) and in terms of departures (181,488 in 2016). This passed George Bush Intercontinental in Houston, which carried 15.5 million with 178,019 departures. United operates maintenance bases in Cleveland and Orlando in addition to the maintenance locations located at United's hubs.\nThe company employs over 86,000 people while maintaining its headquarters in Chicago's Willis Tower (formerly known as Sears Tower). Through the airline's parent company, United Continental Holdings, it is publicly traded under NYSE: UAL with a market capitalization of over $18 billion as of September 2014.\n\n"
+}
+
+> db.airlines.findOne({'CarrierCode': 'DL'})
+{
+        "_id" : ObjectId("598cf0e0e1a63a3b7f6f0830"),
+        "Name" : "Delta Air Lines",
+        "CarrierCode" : "DL",
+        "url" : "https://www.delta.com/",
+        "logo_url" : "http://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Delta_logo.svg/270px-Delta_logo.svg.png",
+        "domain" : "delta.com",
+        "summary" : "Delta Air Lines, Inc. (\"Delta\"; NYSE: DAL) is a major American airline, with its headquarters and largest hub at Hartsfieldâ€“Jackson Atlanta International Airport in Atlanta, Georgia. The airline along with its subsidiaries and regional affiliates operate over 5,400 flights daily and serve an extensive domestic and international network that includes 319 destinations in 54 countries on six continents, as of October 2016. Delta is one of the four founding members of the SkyTeam airline alliance, and operates joint ventures with Air France-KLM, Alitalia, Korean Air, China Eastern Airlines, Virgin Atlantic, and Virgin Australia. Regional service is operated under the brand name Delta Connection.\nOne of the five remaining legacy carriers, Delta is the sixth-oldest operating airline by foundation date, and the oldest airline still operating in the United States. The company's history can be traced back to Huff Daland Dusters, founded in 1924 in Macon, Georgia as a crop dusting operation. The company moved to Monroe, Louisiana, and was later renamed Delta Air Services, in reference to the nearby Mississippi Delta region, and commenced passenger services on June 17, 1929. Among predecessors of today's Delta Air Lines, Western Airlines and Northwest Airlines began flying passengers in 1926 and 1927, respectively.\nIn 2013, Delta Air Lines was the world's largest airline in terms of scheduled passengers carried (120.6 million), and the second-largest in terms of both revenue passenger-kilometers flown (277.6 billion) and capacity (4.4 billion ASM/week; March 2013).\n\n"
+}
+> db.airplanes_per_carrier.findOne()
+{
+        "_id" : ObjectId("598ab17eca56c61ca73ea4ae"),
+        "TailNumbers" : [
+                "N201FR",
+                "N202FR",
+                "N203FR",
+                "N204FR",
+                "N205FR",
+                "N206FR",
+                "N207FR",
+                "N208FR",
+                "N209FR",
+                "N210FR",
+                "N211FR",
+                "N213FR",
+                "N214FR",
+                "N216FR",
+                "N218FR",
+                "N219FR",
+                "N220FR",
+                "N221FR",
+                "N223FR",
+                "N227FR",
+                "N228FR",
+                "N229FR",
+                "N230FR",
+                "N232FR",
+                "N701FR",
+                "N702FR",
+                "N704FR",
+                "N705FR",
+                "N902FR",
+                "N905FR",
+                "N906FR",
+                "N908FR",
+                "N910FR",
+                "N912FR",
+                "N918FR",
+                "N919FR",
+                "N920FR",
+                "N921FR",
+                "N922FR",
+                "N923FR",
+                "N924FR",
+                "N925FR",
+                "N926FR",
+                "N927FR",
+                "N928FR",
+                "N929FR",
+                "N931FR",
+                "N932FR",
+                "N933FR",
+                "N934FR",
+                "N935FR",
+                "N938FR",
+                "N939FR",
+                "N941FR",
+                "N943FR",
+                "N947FR",
+                "N948FR",
+                "N949FR",
+                "N951FR",
+                "N952FR",
+                "N953FR",
+                "N954FR"
+        ],
+        "Carrier" : "F9",
+        "FleetCount" : 63
+}
+> airline_summany = db.airlines.findOne({'CarrierCode': 'DL'})
+{
+        "_id" : ObjectId("598cf0e0e1a63a3b7f6f0830"),
+        "Name" : "Delta Air Lines",
+        "CarrierCode" : "DL",
+        "url" : "https://www.delta.com/",
+        "logo_url" : "http://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Delta_logo.svg/270px-Delta_logo.svg.png",
+        "domain" : "delta.com",
+        "summary" : "Delta Air Lines, Inc. (\"Delta\"; NYSE: DAL) is a major American airline, with its headquarters and largest hub at Hartsfieldâ€“Jackson Atlanta International Airport in Atlanta, Georgia. The airline along with its subsidiaries and regional affiliates operate over 5,400 flights daily and serve an extensive domestic and international network that includes 319 destinations in 54 countries on six continents, as of October 2016. Delta is one of the four founding members of the SkyTeam airline alliance, and operates joint ventures with Air France-KLM, Alitalia, Korean Air, China Eastern Airlines, Virgin Atlantic, and Virgin Australia. Regional service is operated under the brand name Delta Connection.\nOne of the five remaining legacy carriers, Delta is the sixth-oldest operating airline by foundation date, and the oldest airline still operating in the United States. The company's history can be traced back to Huff Daland Dusters, founded in 1924 in Macon, Georgia as a crop dusting operation. The company moved to Monroe, Louisiana, and was later renamed Delta Air Services, in reference to the nearby Mississippi Delta region, and commenced passenger services on June 17, 1929. Among predecessors of today's Delta Air Lines, Western Airlines and Northwest Airlines began flying passengers in 1926 and 1927, respectively.\nIn 2013, Delta Air Lines was the world's largest airline in terms of scheduled passengers carried (120.6 million), and the second-largest in terms of both revenue passenger-kilometers flown (277.6 billion) and capacity (4.4 billion ASM/week; March 2013).\n\n"
+}
+> airline_summany.logo_url
+http://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Delta_logo.svg/270px-Delta_logo.svg.png
+> airline_summany.url
+https://www.delta.com/
+> db.airlines.find_one({'CarrierCode': 'DL'})
+Fri Aug 11 00:27:32 TypeError: db.airlines.find_one is not a function (shell):1
+>
+
+Welcome to your Vagrant-built virtual machine.
+Last login: Fri Aug 11 00:25:29 2017 from 10.0.2.2
+vagrant@precise64:~$ cd Agile_Data_Code_2
+vagrant@precise64:~/Agile_Data_Code_2$ PYSPARK_DRIVER_PYTHON=ipython pyspark
+Python 3.5.3 |Continuum Analytics, Inc.| (default, Mar  6 2017, 11:58:13)
+[GCC 4.4.7 20120313 (Red Hat 4.4.7-1)] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+17/08/11 23:05:08 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+17/08/11 23:05:08 WARN Utils: Your hostname, precise64 resolves to a loopback address: 127.0.1.1; using 10.0.2.15 instead (on interface eth0)
+17/08/11 23:05:08 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address
+Welcome to
+      ____              __
+     / __/__  ___ _____/ /__
+    _\ \/ _ \/ _ `/ __/  '_/
+   /__ / .__/\_,_/_/ /_/\_\   version 2.1.0
+      /_/
+
+Using Python version 3.5.3 (default, Mar  6 2017 11:58:13)
+SparkSession available as 'spark'.
+>>> faa_tail_number_inquiry = spark.read.json('data/faa_tail_number_inquiry.jsonl')
+>>> faa_tail_number_inquiry.show()
++-------+-------------------+------------+--------------------+--------+-----------+--------------------+-------------+-------------+
+|TailNum|engine_manufacturer|engine_model|        manufacturer|mfr_year|      model|               owner|  owner_state|serial_number|
++-------+-------------------+------------+--------------------+--------+-----------+--------------------+-------------+-------------+
+| N933EV|                 GE| CF34 SERIES|      BOMBARDIER INC|    2005|CL-600-2B19| DELTA AIR LINES INC|      GEORGIA|         8022|
+| N917WN|           CFM INTL|  CFM56-7B24|              BOEING|    2008|    737-7H4|SOUTHWEST AIRLINE...|        TEXAS|        36624|
+| N438WN|          CFM INTL.|CFM56 SERIES|              BOEING|    2003|    737-7H4|SOUTHWEST AIRLINE...|        TEXAS|        29833|
+| N283VA|           CFM INTL| CFM56-5B4/3|              AIRBUS|    2015|   A320-214|  VIRGIN AMERICA INC|   CALIFORNIA|         6787|
+| N473UA|           IVCHENKO| AL-25SERIES|    AIRBUS INDUSTRIE|    2001|   A320-232| UNITED AIRLINES INC|     ILLINOIS|         1469|
+| N637JB|                IAE|    V2527-A5|              AIRBUS|    2006|   A320-232|JETBLUE AIRWAYS CORP|     NEW YORK|         2781|
+| N286AY|         ROLLS-ROYC|   RR772B-60|              AIRBUS|    None|   A330-243|AMERICAN AIRLINES...|        TEXAS|         1415|
+| N422UA|                IAE| V2500SERIES|    AIRBUS INDUSTRIE|    1995|   A320-232| U S BANK NA TRUSTEE|MASSACHUSETTS|          503|
+| N641VA|           CFM INTL|   CFM56-5B4|              AIRBUS|    2008|   A320-214|WELLS FARGO BANK ...|         UTAH|         3656|
+| N825NW|                 GE|  CF6-80E1A4|              AIRBUS|    2015|   A330-302|  US BANK NA TRUSTEE|  CONNECTICUT|         1679|
+| N957WN|           CFM INTL|CFM56-7B24/3|              BOEING|    2011|    737-7H4|SOUTHWEST AIRLINE...|        TEXAS|        41528|
+| N8311Q|           CFM INTL| CFM56-7B26E|              BOEING|    2012|    737-8H4|SOUTHWEST AIRLINE...|        TEXAS|        38808|
+| N931EV|                 GE| CF34 SERIES|      BOMBARDIER INC|    2005|CL-600-2B19| DELTA AIR LINES INC|      GEORGIA|         8015|
+| N47414|           CFM INTL|  CFM56-7B26|              BOEING|    2008|  737-924ER| UNITED AIRLINES INC|     ILLINOIS|        32827|
+| N925DL|              P & W| JT8D SERIES|MCDONNELL DOUGLAS...|    1988|      MD-88|WELLS FARGO BANK ...|         UTAH|        49712|
+| N13550|         ROLLS-ROYC|  AE 3007A1P|             EMBRAER|    2002|  EMB-145LR|WELLS FARGO BANK ...|         UTAH|       145575|
+| N13750|          CFM INTL.|CFM56 SERIES|              BOEING|    1999|    737-724|WELLS FARGO BANK ...|         UTAH|        28941|
+| N79521|           CFM INTL|CFM56-7B26/3|              BOEING|    2010|    737-824| UNITED AIRLINES INC|     ILLINOIS|        31662|
+| N487WN|          CFM INTL.|CFM56 SERIES|              BOEING|    2004|    737-7H4|SOUTHWEST AIRLINE...|        TEXAS|        33854|
+| N378AA|         CONT MOTOR|   0-300 SER|              CESSNA|    1963|       172E|   UNDERWOOD BRUCE D|    WISCONSIN|     17250969|
++-------+-------------------+------------+--------------------+--------+-----------+--------------------+-------------+-------------+
+only showing top 20 rows
+
+>>> faa_tail_number_inquiry.count()
+3988
+>>> unique_tail_numbers = spark.read.json('data/tail_numbers.jsonl')
+Traceback (most recent call last):
+  File "/home/vagrant/spark/python/pyspark/sql/utils.py", line 63, in deco
+    return f(*a, **kw)
+  File "/home/vagrant/spark/python/lib/py4j-0.10.4-src.zip/py4j/protocol.py", line 319, in get_return_value
+py4j.protocol.Py4JJavaError: An error occurred while calling o29.json.
+: org.apache.spark.sql.AnalysisException: Path does not exist: file:/home/vagrant/Agile_Data_Code_2/data/tail_numbers.jsonl;
+        at org.apache.spark.sql.execution.datasources.DataSource$$anonfun$14.apply(DataSource.scala:382)
+        at org.apache.spark.sql.execution.datasources.DataSource$$anonfun$14.apply(DataSource.scala:370)
+        at scala.collection.TraversableLike$$anonfun$flatMap$1.apply(TraversableLike.scala:241)
+        at scala.collection.TraversableLike$$anonfun$flatMap$1.apply(TraversableLike.scala:241)
+        at scala.collection.immutable.List.foreach(List.scala:381)
+        at scala.collection.TraversableLike$class.flatMap(TraversableLike.scala:241)
+        at scala.collection.immutable.List.flatMap(List.scala:344)
+        at org.apache.spark.sql.execution.datasources.DataSource.resolveRelation(DataSource.scala:370)
+        at org.apache.spark.sql.DataFrameReader.load(DataFrameReader.scala:152)
+        at org.apache.spark.sql.DataFrameReader.json(DataFrameReader.scala:298)
+        at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+        at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+        at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+        at java.lang.reflect.Method.invoke(Method.java:498)
+        at py4j.reflection.MethodInvoker.invoke(MethodInvoker.java:244)
+        at py4j.reflection.ReflectionEngine.invoke(ReflectionEngine.java:357)
+        at py4j.Gateway.invoke(Gateway.java:280)
+        at py4j.commands.AbstractCommand.invokeMethod(AbstractCommand.java:132)
+        at py4j.commands.CallCommand.execute(CallCommand.java:79)
+        at py4j.GatewayConnection.run(GatewayConnection.java:214)
+        at java.lang.Thread.run(Thread.java:748)
+
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "/home/vagrant/spark/python/pyspark/sql/readwriter.py", line 232, in json
+    return self._df(self._jreader.json(self._spark._sc._jvm.PythonUtils.toSeq(path)))
+  File "/home/vagrant/spark/python/lib/py4j-0.10.4-src.zip/py4j/java_gateway.py", line 1133, in __call__
+  File "/home/vagrant/spark/python/pyspark/sql/utils.py", line 69, in deco
+    raise AnalysisException(s.split(': ', 1)[1], stackTrace)
+pyspark.sql.utils.AnalysisException: 'Path does not exist: file:/home/vagrant/Agile_Data_Code_2/data/tail_numbers.jsonl;'
+>>> unique_tail_numbers = spark.read.json('data/tail_numbers.jsonl')
+Traceback (most recent call last):
+  File "/home/vagrant/spark/python/pyspark/sql/utils.py", line 63, in deco
+    return f(*a, **kw)
+  File "/home/vagrant/spark/python/lib/py4j-0.10.4-src.zip/py4j/protocol.py", line 319, in get_return_value
+py4j.protocol.Py4JJavaError: An error occurred while calling o55.json.
+: org.apache.spark.sql.AnalysisException: Path does not exist: file:/home/vagrant/Agile_Data_Code_2/data/tail_numbers.jsonl;
+        at org.apache.spark.sql.execution.datasources.DataSource$$anonfun$14.apply(DataSource.scala:382)
+        at org.apache.spark.sql.execution.datasources.DataSource$$anonfun$14.apply(DataSource.scala:370)
+        at scala.collection.TraversableLike$$anonfun$flatMap$1.apply(TraversableLike.scala:241)
+        at scala.collection.TraversableLike$$anonfun$flatMap$1.apply(TraversableLike.scala:241)
+        at scala.collection.immutable.List.foreach(List.scala:381)
+        at scala.collection.TraversableLike$class.flatMap(TraversableLike.scala:241)
+        at scala.collection.immutable.List.flatMap(List.scala:344)
+        at org.apache.spark.sql.execution.datasources.DataSource.resolveRelation(DataSource.scala:370)
+        at org.apache.spark.sql.DataFrameReader.load(DataFrameReader.scala:152)
+        at org.apache.spark.sql.DataFrameReader.json(DataFrameReader.scala:298)
+        at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+        at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+        at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+        at java.lang.reflect.Method.invoke(Method.java:498)
+        at py4j.reflection.MethodInvoker.invoke(MethodInvoker.java:244)
+        at py4j.reflection.ReflectionEngine.invoke(ReflectionEngine.java:357)
+        at py4j.Gateway.invoke(Gateway.java:280)
+        at py4j.commands.AbstractCommand.invokeMethod(AbstractCommand.java:132)
+        at py4j.commands.CallCommand.execute(CallCommand.java:79)
+        at py4j.GatewayConnection.run(GatewayConnection.java:214)
+        at java.lang.Thread.run(Thread.java:748)
+
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "/home/vagrant/spark/python/pyspark/sql/readwriter.py", line 232, in json
+    return self._df(self._jreader.json(self._spark._sc._jvm.PythonUtils.toSeq(path)))
+  File "/home/vagrant/spark/python/lib/py4j-0.10.4-src.zip/py4j/java_gateway.py", line 1133, in __call__
+  File "/home/vagrant/spark/python/pyspark/sql/utils.py", line 69, in deco
+    raise AnalysisException(s.split(': ', 1)[1], stackTrace)
+pyspark.sql.utils.AnalysisException: 'Path does not exist: file:/home/vagrant/Agile_Data_Code_2/data/tail_numbers.jsonl;'
+>>> unique_tail_numbers = spark.read.json('data/tail_numbers.jsonl')
+>>> unique_tail_numbers.show()
++-------+
+|TailNum|
++-------+
+| N3KJAA|
+| N632SW|
+| N537JB|
+| N920DE|
+| N200UU|
+| N138SY|
+| N7740A|
+| N14568|
+| N81449|
+| N5ESAA|
+| N378NW|
+| N946WN|
+| N913JB|
+| N548CA|
+| N651AW|
+| N380DA|
+| N964AT|
+| N15986|
+| N3JRAA|
+| N791UA|
++-------+
+only showing top 20 rows
+
+>>> tail_num_plus_inquiry = unique_tail_numbers.join(
+...   faa_tail_number_inquiry,
+...   unique_tail_numbers.TailNum == faa_tail_number_inquiry.TailNum,
+... )
+>>> tail_num_plus_inquiry.show()
++-------+-------+-------------------+-------------+--------------------+--------+---------------+--------------------+-------------+-------------+
+|TailNum|TailNum|engine_manufacturer| engine_model|        manufacturer|mfr_year|          model|               owner|  owner_state|serial_number|
++-------+-------+-------------------+-------------+--------------------+--------+---------------+--------------------+-------------+-------------+
+| N632SW| N632SW|          CFM INTL.| CFM56 SERIES|              BOEING|    1996|        737-3H4|SOUTHWEST AIRLINE...|        TEXAS|        27707|
+| N537JB| N537JB|         ROLLS-ROYC|  250-C300/A1|ROBINSON HELICOPT...|    2012|            R66|          JM AIR LLC|     VIRGINIA|         0257|
+| N920DE| N920DE|              P & W|  JT8D SERIES|MCDONNELL DOUGLAS...|    1993|          MD-88| DELTA AIR LINES INC|      GEORGIA|        53423|
+| N200UU| N200UU|         ROLLS-ROYC|RB.211 SERIES|              BOEING|    1995|        757-2B7|AMERICAN AIRLINES...|        TEXAS|        27809|
+| N138SY| N138SY|                 GE|     CF34-8E5|         EMBRAER S A|    2015| ERJ 170-200 LR|SKYWEST AIRLINES INC|         UTAH|     17000466|
+| N7740A| N7740A|           CFM INTL|   CFM56-7B22|              BOEING|    2007|        737-7BD|SOUTHWEST AIRLINE...|        TEXAS|        33927|
+| N14568| N14568|         ROLLS-ROYC|   AE 3007A1P|             EMBRAER|    2002|      EMB-145LR|WELLS FARGO BANK ...|         UTAH|       145628|
+| N81449| N81449|           CFM INTL|  CFM56-7B26E|              BOEING|    2012|      737-924ER| UNITED AIRLINES INC|     ILLINOIS|        31651|
+| N378NW| N378NW|          CFM INTL.| CFM56 SERIES|              AIRBUS|    2003|       A320-211| DELTA AIR LINES INC|      GEORGIA|         2092|
+| N946WN| N946WN|           CFM INTL| CFM56-7B24/3|              BOEING|    2010|        737-7H4|SOUTHWEST AIRLINE...|        TEXAS|        36918|
+| N913JB| N913JB|                IAE|     V2533-A5|              AIRBUS|    2013|       A321-231|JETBLUE AIRWAYS CORP|     NEW YORK|         5909|
+| N548CA| N548CA|                 GE|     CF34-8C5|      BOMBARDIER INC|    2008|    CL-600-2D24| DELTA AIR LINES INC|      GEORGIA|        15159|
+| N651AW| N651AW|            Unknown|      Unknown|    AIRBUS INDUSTRIE|    1998|       A320-232| U S BANK NA TRUSTEE|MASSACHUSETTS|          866|
+| N380DA| N380DA|          CFM INTL.| CFM56 SERIES|              BOEING|    1999|        737-832| DELTA AIR LINES INC|      GEORGIA|        30266|
+| N964AT| N964AT|          BMW ROLLS|BR 700 SERIES|              BOEING|    2001|        717-200|WELLS FARGO BANK ...|         UTAH|        55025|
+| N15986| N15986|            ALLISON|     AE 3007A|             EMBRAER|    2000|      EMB-145LR| UNITED AIRLINES INC|     ILLINOIS|       145254|
+| N791UA| N791UA|                P&W|   PW4000 SER|              BOEING|    1997|        777-222| UNITED AIRLINES INC|     ILLINOIS|        26933|
+| N925EV| N925EV|                 GE|  CF34 SERIES|      BOMBARDIER INC|    2003|    CL-600-2B19|EXPRESSJET AIRLIN...|      GEORGIA|         7831|
+| N654AW| N654AW|                IAE|  V2500SERIES|    AIRBUS INDUSTRIE|    1999|       A320-232|  US BANK NA TRUSTEE|MASSACHUSETTS|         1050|
+| N274JB| N274JB|                 GE|    CF34-10E6|             EMBRAER|    2007|ERJ 190-100 IGW|WELLS FARGO BANK ...|         UTAH|     19000082|
++-------+-------+-------------------+-------------+--------------------+--------+---------------+--------------------+-------------+-------------+
+only showing top 20 rows
+
+>>> tail_num_plus_inquiry.count()
+3988
+>>> unique_tail_numbers.count()
+4898
+>>> tail_num_plus_inquiry = tail_num_plus_inquiry.drop(unique_tail_numbers.TailNum)
+>>> tail_num_plus_inquiry.show()
++-------+-------------------+-------------+--------------------+--------+---------------+--------------------+-------------+-------------+
+|TailNum|engine_manufacturer| engine_model|        manufacturer|mfr_year|          model|               owner|  owner_state|serial_number|
++-------+-------------------+-------------+--------------------+--------+---------------+--------------------+-------------+-------------+
+| N632SW|          CFM INTL.| CFM56 SERIES|              BOEING|    1996|        737-3H4|SOUTHWEST AIRLINE...|        TEXAS|        27707|
+| N537JB|         ROLLS-ROYC|  250-C300/A1|ROBINSON HELICOPT...|    2012|            R66|          JM AIR LLC|     VIRGINIA|         0257|
+| N920DE|              P & W|  JT8D SERIES|MCDONNELL DOUGLAS...|    1993|          MD-88| DELTA AIR LINES INC|      GEORGIA|        53423|
+| N200UU|         ROLLS-ROYC|RB.211 SERIES|              BOEING|    1995|        757-2B7|AMERICAN AIRLINES...|        TEXAS|        27809|
+| N138SY|                 GE|     CF34-8E5|         EMBRAER S A|    2015| ERJ 170-200 LR|SKYWEST AIRLINES INC|         UTAH|     17000466|
+| N7740A|           CFM INTL|   CFM56-7B22|              BOEING|    2007|        737-7BD|SOUTHWEST AIRLINE...|        TEXAS|        33927|
+| N14568|         ROLLS-ROYC|   AE 3007A1P|             EMBRAER|    2002|      EMB-145LR|WELLS FARGO BANK ...|         UTAH|       145628|
+| N81449|           CFM INTL|  CFM56-7B26E|              BOEING|    2012|      737-924ER| UNITED AIRLINES INC|     ILLINOIS|        31651|
+| N378NW|          CFM INTL.| CFM56 SERIES|              AIRBUS|    2003|       A320-211| DELTA AIR LINES INC|      GEORGIA|         2092|
+| N946WN|           CFM INTL| CFM56-7B24/3|              BOEING|    2010|        737-7H4|SOUTHWEST AIRLINE...|        TEXAS|        36918|
+| N913JB|                IAE|     V2533-A5|              AIRBUS|    2013|       A321-231|JETBLUE AIRWAYS CORP|     NEW YORK|         5909|
+| N548CA|                 GE|     CF34-8C5|      BOMBARDIER INC|    2008|    CL-600-2D24| DELTA AIR LINES INC|      GEORGIA|        15159|
+| N651AW|            Unknown|      Unknown|    AIRBUS INDUSTRIE|    1998|       A320-232| U S BANK NA TRUSTEE|MASSACHUSETTS|          866|
+| N380DA|          CFM INTL.| CFM56 SERIES|              BOEING|    1999|        737-832| DELTA AIR LINES INC|      GEORGIA|        30266|
+| N964AT|          BMW ROLLS|BR 700 SERIES|              BOEING|    2001|        717-200|WELLS FARGO BANK ...|         UTAH|        55025|
+| N15986|            ALLISON|     AE 3007A|             EMBRAER|    2000|      EMB-145LR| UNITED AIRLINES INC|     ILLINOIS|       145254|
+| N791UA|                P&W|   PW4000 SER|              BOEING|    1997|        777-222| UNITED AIRLINES INC|     ILLINOIS|        26933|
+| N925EV|                 GE|  CF34 SERIES|      BOMBARDIER INC|    2003|    CL-600-2B19|EXPRESSJET AIRLIN...|      GEORGIA|         7831|
+| N654AW|                IAE|  V2500SERIES|    AIRBUS INDUSTRIE|    1999|       A320-232|  US BANK NA TRUSTEE|MASSACHUSETTS|         1050|
+| N274JB|                 GE|    CF34-10E6|             EMBRAER|    2007|ERJ 190-100 IGW|WELLS FARGO BANK ...|         UTAH|     19000082|
++-------+-------------------+-------------+--------------------+--------+---------------+--------------------+-------------+-------------+
+only showing top 20 rows
+
+>>> tail_num_plus_inquiry.count()
+3988
+>>>
+>>> tail_num_plus_inquiry.registerTempTable("tail_num_plus_inquiry")
+>>> airplanes = spark.sql("""SELECT
+...   TailNum AS TailNum,
+...   engine_manufacturer AS EngineManufacturer,
+...   engine_model AS EngineModel,
+...   manufacturer AS Manufacturer,
+...   mfr_year AS ManufacturerYear,
+...   model AS Model,
+...   owner AS Owner,
+...   owner_state AS OwnerState,
+...   serial_number AS SerialNumber
+... FROM
+...   tail_num_plus_inquiry""")
+>>> airplanes.repartition(1).write.mode("overwrite").json('data/airplanes.json')
+>>>
+
+>>> airplanes.write.format("org.elasticsearch.spark.sql")\
+...   .option("es.resource","agile_data_science/airplanes")\
+...   .mode("overwrite")\
+...   .save()
+
+Last login: Fri Aug 11 23:04:47 2017 from 10.0.2.2
+vagrant@precise64:~$ cd Agile_Data_Code_2
+vagrant@precise64:~/Agile_Data_Code_2$ cat data/airplanes.json/part-* >> data/airplanes.jsonl
+vagrant@precise64:~/Agile_Data_Code_2$ head -10 data/airplanes.jsonl
+{"TailNum":"N632SW","EngineManufacturer":"CFM INTL.","EngineModel":"CFM56 SERIES","Manufacturer":"BOEING","ManufacturerYear":"1996","Model":"737-3H4","Owner":"SOUTHWEST AIRLINES CO","OwnerState":"TEXAS","SerialNumber":"27707"}
+{"TailNum":"N537JB","EngineManufacturer":"ROLLS-ROYC","EngineModel":"250-C300/A1","Manufacturer":"ROBINSON HELICOPTER CO","ManufacturerYear":"2012","Model":"R66","Owner":"JM AIR LLC","OwnerState":"VIRGINIA","SerialNumber":"0257"}
+{"TailNum":"N920DE","EngineManufacturer":"P & W","EngineModel":"JT8D SERIES","Manufacturer":"MCDONNELL DOUGLAS AIRCRAFT CO","ManufacturerYear":"1993","Model":"MD-88","Owner":"DELTA AIR LINES INC","OwnerState":"GEORGIA","SerialNumber":"53423"}
+{"TailNum":"N200UU","EngineManufacturer":"ROLLS-ROYC","EngineModel":"RB.211 SERIES","Manufacturer":"BOEING","ManufacturerYear":"1995","Model":"757-2B7","Owner":"AMERICAN AIRLINES INC","OwnerState":"TEXAS","SerialNumber":"27809"}
+{"TailNum":"N138SY","EngineManufacturer":"GE","EngineModel":"CF34-8E5","Manufacturer":"EMBRAER S A","ManufacturerYear":"2015","Model":"ERJ 170-200 LR","Owner":"SKYWEST AIRLINES INC","OwnerState":"UTAH","SerialNumber":"17000466"}
+{"TailNum":"N7740A","EngineManufacturer":"CFM INTL","EngineModel":"CFM56-7B22","Manufacturer":"BOEING","ManufacturerYear":"2007","Model":"737-7BD","Owner":"SOUTHWEST AIRLINES CO","OwnerState":"TEXAS","SerialNumber":"33927"}
+{"TailNum":"N14568","EngineManufacturer":"ROLLS-ROYC","EngineModel":"AE 3007A1P","Manufacturer":"EMBRAER","ManufacturerYear":"2002","Model":"EMB-145LR","Owner":"WELLS FARGO BANK NORTHWEST NA TRUSTEE","OwnerState":"UTAH","SerialNumber":"145628"}
+{"TailNum":"N81449","EngineManufacturer":"CFM INTL","EngineModel":"CFM56-7B26E","Manufacturer":"BOEING","ManufacturerYear":"2012","Model":"737-924ER","Owner":"UNITED AIRLINES INC","OwnerState":"ILLINOIS","SerialNumber":"31651"}
+{"TailNum":"N378NW","EngineManufacturer":"CFM INTL.","EngineModel":"CFM56 SERIES","Manufacturer":"AIRBUS","ManufacturerYear":"2003","Model":"A320-211","Owner":"DELTA AIR LINES INC","OwnerState":"GEORGIA","SerialNumber":"2092"}
+{"TailNum":"N946WN","EngineManufacturer":"CFM INTL","EngineModel":"CFM56-7B24/3","Manufacturer":"BOEING","ManufacturerYear":"2010","Model":"737-7H4","Owner":"SOUTHWEST AIRLINES CO","OwnerState":"TEXAS","SerialNumber":"36918"}
+vagrant@precise64:~/Agile_Data_Code_2$ sudo initctl elasticsearch status
+initctl: invalid command: elasticsearch
+Try `initctl --help' for more information.
+vagrant@precise64:~/Agile_Data_Code_2$ /home/vagrant/elasticsearch/bin/elasticsearch -d
+vagrant@precise64:~/Agile_Data_Code_2$ curl -XGET 'localhost:9200/agile_data_science/airplanes/_search?q=*'
+{"took":22,"timed_out":false,"_shards":{"total":5,"successful":5,"failed":0},"hits":{"total":3988,"max_score":1.0,"hits":[{"_index":"agile_data_science","_type":"airplanes","_id":"AV3U5TQ1A7gz7rwjVePK","_score":1.0,"_source":{"EngineManufacturer":"CFM INTL.","EngineModel":"CFM56 SERIES","Manufacturer":"BOEING","ManufacturerYear":"1996","Model":"737-3H4","Owner":"SOUTHWEST AIRLINES CO","OwnerState":"TEXAS","SerialNumber":"27707","TailNum":"N632SW"}},{"_index":"agile_data_science","_type":"airplanes","_id":"AV3U5TQ1A7gz7rwjVePL","_score":1.0,"_source":{"EngineManufacturer":"ROLLS-ROYC","EngineModel":"250-C300/A1","Manufacturer":"ROBINSON HELICOPTER CO","ManufacturerYear":"2012","Model":"R66","Owner":"JM AIR LLC","OwnerState":"VIRGINIA","SerialNumber":"0257","TailNum":"N537JB"}},{"_index":"agile_data_science","_type":"airplanes","_id":"AV3U5TQ1A7gz7rwjVePP","_score":1.0,"_source":{"EngineManufacturer":"CFM INTL","EngineModel":"CFM56-7B22","Manufacturer":"BOEING","ManufacturerYear":"2007","Model":"737-7BD","Owner":"SOUTHWEST AIRLINES CO","OwnerState":"TEXAS","SerialNumber":"33927","TailNum":"N7740A"}},{"_index":"agile_data_science","_type":"airplanes","_id":"AV3U5TQ1A7gz7rwjVePQ","_score":1.0,"_source":{"EngineManufacturer":"ROLLS-ROYC","EngineModel":"AE 3007A1P","Manufacturer":"EMBRAER","ManufacturerYear":"2002","Model":"EMB-145LR","Owner":"WELLS FARGO BANK NORTHWEST NA TRUSTEE","OwnerState":"UTAH","SerialNumber":"145628","TailNum":"N14568"}},{"_index":"agile_data_science","_type":"airplanes","_id":"AV3U5TQ1A7gz7rwjVePR","_score":1.0,"_source":{"EngineManufacturer":"CFM INTL","EngineModel":"CFM56-7B26E","Manufacturer":"BOEING","ManufacturerYear":"2012","Model":"737-924ER","Owner":"UNITED AIRLINES INC","OwnerState":"ILLINOIS","SerialNumber":"31651","TailNum":"N81449"}},{"_index":"agile_data_science","_type":"airplanes","_id":"AV3U5TQ1A7gz7rwjVePX","_score":1.0,"_source":{"EngineManufacturer":"CFM INTL.","EngineModel":"CFM56 SERIES","Manufacturer":"BOEING","ManufacturerYear":"1999","Model":"737-832","Owner":"DELTA AIR LINES INC","OwnerState":"GEORGIA","SerialNumber":"30266","TailNum":"N380DA"}},{"_index":"agile_data_science","_type":"airplanes","_id":"AV3U5TQ1A7gz7rwjVePa","_score":1.0,"_source":{"EngineManufacturer":"P&W","EngineModel":"PW4000 SER","Manufacturer":"BOEING","ManufacturerYear":"1997","Model":"777-222","Owner":"UNITED AIRLINES INC","OwnerState":"ILLINOIS","SerialNumber":"26933","TailNum":"N791UA"}},{"_index":"agile_data_science","_type":"airplanes","_id":"AV3U5TQ1A7gz7rwjVePc","_score":1.0,"_source":{"EngineManufacturer":"IAE","EngineModel":"V2500SERIES","Manufacturer":"AIRBUS INDUSTRIE","ManufacturerYear":"1999","Model":"A320-232","Owner":"US BANK NA TRUSTEE","OwnerState":"MASSACHUSETTS","SerialNumber":"1050","TailNum":"N654AW"}},{"_index":"agile_data_science","_type":"airplanes","_id":"AV3U5TQ1A7gz7rwjVePf","_score":1.0,"_source":{"EngineManufacturer":"GE","EngineModel":"CF34-8C5B1","Manufacturer":"BOMBARDIER INC","ManufacturerYear":"2009","Model":"CL-600-2C10","Owner":"SKYWEST AIRLINES INC","OwnerState":"UTAH","SerialNumber":"10277","TailNum":"N780SK"}},{"_index":"agile_data_science","_type":"airplanes","_id":"AV3U5TQ1A7gz7rwjVePh","_score":1.0,"_source":{"EngineManufacturer":"CFM INTL.","EngineModel":"CFM56 SERIES","Manufacturer":"BOEING","ManufacturerYear":"1999","Model":"737-7H4","Owner":"SOUTHWEST AIRLINES CO","Owner
+
+Using Python version 3.5.3 (default, Mar  6 2017 11:58:13)
+SparkSession available as 'spark'.
+>>> airplanes = spark.read.json('data/airplanes.json')
+>>> airplanes.registerTempTable("airplanes")
+>>> relative_manufacturer_counts = spark.sql("""SELECT
+...   Manufacturer,
+...   COUNT(*) AS Total,
+...   ROUND(
+...     100 * (
+...       COUNT(*)/(SELECT COUNT(*) FROM airplanes)
+...     ),
+...     2
+...   ) AS PercentageTotal
+... FROM
+...   airplanes
+... GROUP BY
+...   Manufacturer
+... ORDER BY
+...   Total DESC, Manufacturer
+... LIMIT 10"""
+... )
+>>> relative_manufacturer_counts.show(30)
++--------------------+-----+---------------+
+|        Manufacturer|Total|PercentageTotal|
++--------------------+-----+---------------+
+|              BOEING| 1953|          48.97|
+|              AIRBUS|  519|          13.01|
+|      BOMBARDIER INC|  428|          10.73|
+|    AIRBUS INDUSTRIE|  426|          10.68|
+|             EMBRAER|  330|           8.27|
+|   MCDONNELL DOUGLAS|  116|           2.91|
+|MCDONNELL DOUGLAS...|  103|           2.58|
+|         EMBRAER S A|   43|           1.08|
+|MCDONNELL DOUGLAS...|   14|           0.35|
+|              CESSNA|    9|           0.23|
++--------------------+-----+---------------+
+
+>>>
+>>> relative_manufacturer_counts = relative_manufacturer_counts.rdd.map(lambda row: row.asDict())
+>>> grouped_manufacturer_counts = relative_manufacturer_counts.groupBy(lambda x: 1)
+>>> grouped_manufacturer_counts.show()
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+AttributeError: 'PipelinedRDD' object has no attribute 'show'
+>>>
+>>> import pymongo_spark
+>>> pymongo_spark.activate()
+>>> grouped_manufacturer_counts.saveToMongoDB(
+...   'mongodb://localhost:27017/agile_data_science.airplane_manufacturer_totals'
+... )
+>>>
+
+agrant@precise64:~$ mongo agile_data_science
+MongoDB shell version: 2.0.4
+connecting to: agile_data_science
+> db.manufacturer_totals.find()
+> db.airplane_manufacturer_totals.find()
+{ "_id" : 1, "maxindex" : 10, "data" : [        {       "PercentageTotal" : 48.97,      "Manufacturer" : "BOEING",      "Total" : 1953 },       {      "PercentageTotal" : 13.01,       "Manufacturer" : "AIRBUS",      "Total" : 519 },        {       "PercentageTotal" : 10.73,      "Manufacturer" : "BOMBARDIER INC",      "Total" : 428 },        {       "PercentageTotal" : 10.68,      "Manufacturer" : "AIRBUS INDUSTRIE",    "Total" : 426 },        {      "PercentageTotal" : 8.27,        "Manufacturer" : "EMBRAER",     "Total" : 330 },        {       "PercentageTotal" : 2.91,       "Manufacturer" : "MCDONNELL DOUGLAS",   "Total" : 116 },        {       "PercentageTotal" : 2.58,       "Manufacturer" : "MCDONNELL DOUGLAS AIRCRAFT CO",       "Total" : 103 },        {       "PercentageTotal" : 1.08,       "Manufacturer" : "EMBRAER S A",         "Total" : 43 },         {       "PercentageTotal" : 0.35,      "Manufacturer" : "MCDONNELL DOUGLAS CORPORATION",        "Total" : 14 },         {       "PercentageTotal" : 0.23,       "Manufacturer" : "CESSNA",     "Total" : 9 } ], "index" : 0, "__class__" : "pyspark.resultiterable.ResultIterable" }
+>
+
+Last login: Sun Aug 13 23:27:35 2017 from 10.0.2.2
+vagrant@precise64:~$ cd Agile_Data_Code_2
+vagrant@precise64:~/Agile_Data_Code_2$ curl -XGET 'localhost:9200/agile_data_science/airplanes/_search?q=*'
+{"took":4,"timed_out":false,"_shards":{"total":5,"successful":5,"failed":0},"hits":{"total":3988,"max_score":1.0,"hits":[{"_index":"agile_data_science","_type":"airplanes","_id":"AV3U5TQ1A7gz7rwjVePK","_score":1.0,"_source":{"EngineManufacturer":"CFM INTL.","EngineModel":"CFM56 SERIES","Manufacturer":"BOEING","ManufacturerYear":"1996","Model":"737-3H4","Owner":"SOUTHWEST AIRLINES CO","OwnerState":"TEXAS","SerialNumber":"27707","TailNum":"N632SW"}},{"_index":"agile_data_science","_type":"airplanes","_id":"AV3U5TQ1A7gz7rwjVePL","_score":1.0,"_source":{"EngineManufacturer":"ROLLS-ROYC","EngineModel":"250-C300/A1","Manufacturer":"ROBINSON HELICOPTER CO","ManufacturerYear":"2012","Model":"R66","Owner":"JM AIR LLC","OwnerState":"VIRGINIA","SerialNumber":"0257","TailNum":"N537JB"}},{"_index":"agile_data_science","_type":"airplanes","_id":"AV3U5TQ1A7gz7rwjVePP","_score":1.0,"_source":{"EngineManufacturer":"CFM INTL","EngineModel":"CFM56-7B22","Manufacturer":"BOEING","ManufacturerYear":"2007","Model":"737-7BD","Owner":"SOUTHWEST AIRLINES CO","OwnerState":"TEXAS","SerialNumber":"33927","TailNum":"N7740A"}},{"_index":"agile_data_science","_type":"airplanes","_id":"AV3U5TQ1A7gz7rwjVePQ","_score":1.0,"_source":{"EngineManufacturer":"ROLLS-ROYC","EngineModel":"AE 3007A1P","Manufacturer":"EMBRAER","ManufacturerYear":"2002","Model":"EMB-145LR","Owner":"WELLS FARGO BANK NORTHWEST NA TRUSTEE","OwnerState":"UTAH","SerialNumber":"145628","TailNum":"N14568"}},{"_index":"agile_data_science","_type":"airplanes","_id":"AV3U5TQ1A7gz7rwjVePR","_score":1.0,"_source":{"EngineManufacturer":"CFM INTL","EngineModel":"CFM56-7B26E","Manufacturer":"BOEING","ManufacturerYear":"2012","Model":"737-924ER","Owner":"UNITED AIRLINES INC","OwnerState":"ILLINOIS","SerialNumber":"31651","TailNum":"N81449"}},{"_index":"agile_data_science","_type":"airplanes","_id":"AV3U5TQ1A7gz7rwjVePX","_score":1.0,"_source":{"EngineManufacturer":"CFM INTL.","EngineModel":"CFM56 SERIES","Manufacturer":"BOEING","ManufacturerYear":"1999","Model":"737-832","Owner":"DELTA AIR LINES INC","OwnerState":"GEORGIA","SerialNumber":"30266","TailNum":"N380DA"}},{"_index":"agile_data_science","_type":"airplanes","_id":"AV3U5TQ1A7gz7rwjVePa","_score":1.0,"_source":{"EngineManufacturer":"P&W","EngineModel":"PW4000 SER","Manufacturer":"BOEING","ManufacturerYear":"1997","Model":"777-222","Owner":"UNITED AIRLINES INC","OwnerState":"ILLINOIS","SerialNumber":"26933","TailNum":"N791UA"}},{"_index":"agile_data_science","_type":"airplanes","_id":"AV3U5TQ1A7gz7rwjVePc","_score":1.0,"_source":{"EngineManufacturer":"IAE","EngineModel":"V2500SERIES","Manufacturer":"AIRBUS INDUSTRIE","ManufacturerYear":"1999","Model":"A320-232","Owner":"US BANK NA TRUSTEE","OwnerState":"MASSACHUSETTS","SerialNumber":"1050","TailNum":"N654AW"}},{"_index":"agile_data_science","_type":"airplanes","_id":"AV3U5TQ1A7gz7rwjVePf","_score":1.0,"_source":{"EngineManufacturer":"GE","EngineModel":"CF34-8C5B1","Manufacturer":"BOMBARDIER INC","ManufacturerYear":"2009","Model":"CL-600-2C10","Owner":"SKYWEST AIRLINES INC","OwnerState":"UTAH","SerialNumber":"10277","TailNum":"N780SK"}},{"_index":"agile_data_science","_type":"airplanes","_id":"AV3U5TQ1A7gz7rwjVePh","_score":1.0,"_source":{"EngineManufacturer":"CFM INTL.","EngineModel":"CFM56 SERIES","Manufacturer":"BOEING","ManufacturerYear":"1999","Model":"737-7H4","Owner":"SOUTHWEST AIRLINES CO","OwnerState":"TEXAS","SerialNumber":"27858","TailNum":"N726SW"}}]}}vagrant@precise64:~/Agile_Data_Code_2$
+vagrant@precise64:~/Agile_Data_Code_2$
+vagrant@precise64:~/Agile_Data_Code_2$ curl -XGET 'localhost:9200/agile_data_science/airplanes/_search?q=TailNum:N41135&pretty'
+{
+  "took" : 87,
+  "timed_out" : false,
+  "_shards" : {
+    "total" : 5,
+    "successful" : 5,
+    "failed" : 0
+  },
+  "hits" : {
+    "total" : 1,
+    "max_score" : 9.830567,
+    "hits" : [
+      {
+        "_index" : "agile_data_science",
+        "_type" : "airplanes",
+        "_id" : "AV3U5Tb3A7gz7rwjVerU",
+        "_score" : 9.830567,
+        "_source" : {
+          "EngineManufacturer" : "ROLLS-ROYC",
+          "EngineModel" : "RB.211 SERIES",
+          "Manufacturer" : "BOEING",
+          "ManufacturerYear" : "1999",
+          "Model" : "757-224",
+          "Owner" : "UNITED AIRLINES INC",
+          "OwnerState" : "ILLINOIS",
+          "SerialNumber" : "29284",
+          "TailNum" : "N41135"
+        }
+      }
+    ]
+  }
+}
+vagrant@precise64:~/Agile_Data_Code_2$ curl -XGET 'localhost:9200/agile_data_science/airplanes/_search?pretty' -d '{"sort": [{"Owner": {"order": "asc", "ignore_unmapped": "string"}}, "_score"], "from": 0, "size": 5, "query": {"bool": {"must": []}}}'
+{
+  "error" : {
+    "root_cause" : [
+      {
+        "type" : "illegal_argument_exception",
+        "reason" : "[field_sort] unknown field [ignore_unmapped], parser not found"
+      }
+    ],
+    "type" : "illegal_argument_exception",
+    "reason" : "[field_sort] unknown field [ignore_unmapped], parser not found"
+  },
+  "status" : 400
+}
+vagrant@precise64:~/Agile_Data_Code_2$ curl -XGET 'localhost:9200/agile_data_science/airplanes/_search?pretty' -d '{"sort": [{"Owner": {"order": "asc"}, "_score"], "from": 0, "size": 5, "query": {"bool": {"must": []}}}'
+{
+  "error" : {
+    "root_cause" : [
+      {
+        "type" : "json_parse_exception",
+        "reason" : "Unexpected character (']' (code 93)): was expecting a colon to separate field name and value\n at [Source: org.elasticsearch.transport.netty4.ByteBufStreamInput@6d3011e; line: 1, column: 48]"
+      }
+    ],
+    "type" : "json_parse_exception",
+    "reason" : "Unexpected character (']' (code 93)): was expecting a colon to separate field name and value\n at [Source: org.elasticsearch.transport.netty4.ByteBufStreamInput@6d3011e; line: 1, column: 48]"
+  },
+  "status" : 500
+}
+vagrant@precise64:~/Agile_Data_Code_2$ curl -XGET 'localhost:9200/agile_data_science/airplanes/_search?pretty' -d 'query = {
+>     'query': {
+>       'bool': {
+>         'must': []}
+>     },
+>     'sort': [
+>       {'Owner': {'order': 'asc'} },
+>       # {'Manufacturer': {'order': 'asc', 'ignore_unmapped' : True} },
+>       # {'Model': {'order': 'asc', 'ignore_unmapped': True} },
+>       # {'EngineManufacturer': {'order': 'asc', 'ignore_unmapped' : True} },
+>       # {'EngineModel': {'order': 'asc', 'ignore_unmapped': True} },
+>       # {'TailNum': {'order': 'asc', 'ignore_unmapped' : True} },
+>       '_score'
+>     ],
+>     'from': start,
+>     'size': config.AIRPLANE_RECORDS_PER_PAGE
+>   }'
+{
+  "error" : {
+    "root_cause" : [
+      {
+        "type" : "parse_exception",
+        "reason" : "Failed to derive xcontent"
+      }
+    ],
+    "type" : "parse_exception",
+    "reason" : "Failed to derive xcontent"
+  },
+  "status" : 400
+}
+vagrant@precise64:~/Agile_Data_Code_2$ curl -XGET 'localhost:9200/agile_data_science/airplanes/_search?pretty' -d 'query = {
+    'query': {
+      'bool': {
+        'must': []}
+    },
+    'sort': [
+      {'Owner': {'order': 'asc'} },
+      # {'Manufacturer': {'order': 'asc', 'ignore_unmapped' : True} },
+      # {'Model': {'order': 'asc', 'ignore_unmapped': True} },
+      # {'EngineManufacturer': {'order': 'asc', 'ignore_unmapped' : True} },
+      # {'EngineModel': {'order': 'asc', 'ignore_unmapped': True} },
+      # {'TailNum': {'order': 'asc', 'ignore_unmapped' : True} },
+      '_score'
+    ],
+    'size': 10
+  }'
+{
+  "error" : {
+    "root_cause" : [
+      {
+        "type" : "parse_exception",
+        "reason" : "Failed to derive xcontent"
+      }
+    ],
+    "type" : "parse_exception",
+    "reason" : "Failed to derive xcontent"
+  },
+  "status" : 400
+}
+vagrant@precise64:~/Agile_Data_Code_2$ curl 'localhost:9200/_cat/indices?v'
+health status index              uuid                   pri rep docs.count docs.deleted store.size pri.store.size
+yellow open   agile_data_science oIZqiQ78RkCMPILAeBR8fA   5   1    5823073            0      2.5gb          2.5gb
+
+vagrant@precise64:~/Agile_Data_Code_2$ curl -XGET "localhost:9200/agile_data_science/on_time_performance/_search" -d' { "query": {"bool": {"must": [{"match": {"FlightDate": "2015-02-01"}}, {"match": {"Origin": "JFK"}}, {"match": {"Dest": "LAX"}}]}}, "size": 2, "from": 0}'
+{"took":25,"timed_out":false,"_shards":{"total":5,"successful":5,"failed":0},"hits":{"total":33,"max_score":8.3600235,"hits":[{"_index":"agile_data_science","_type":"on_time_performance","_id":"AVw3ipP9-QhAfTbuqtpJ","_score":8.3600235,"_source":{"Year":"2015","Quarter":"1","Month":"2","DayofMonth":"1","DayOfWeek":"7","FlightDate":"2015-02-01","Carrier":"AA","TailNum":"N791AA","FlightNum":"9","Origin":"JFK","OriginCityName":"New York, NY","OriginState":"NY","Dest":"LAX","DestCityName":"Los Angeles, CA","DestState":"CA","DepTime":"0653","DepDelay":-7.0,"DepDelayMinutes":0,"TaxiOut":18.0,"TaxiIn":9.0,"WheelsOff":"0711","WheelsOn":"0945","ArrTime":"0954","ArrDelay":-38.0,"ArrDelayMinutes":0.0,"Cancelled":0,"Diverted":0,"ActualElapsedTime":361.0,"AirTime":334.0,"Flights":1,"Distance":2475.0,"CRSDepTime":"0700","CRSArrTime":"1032"}},{"_index":"agile_data_science","_type":"on_time_performance","_id":"AVw3ipRK-QhAfTbuqtqy","_score":8.3600235,"_source":{"Year":"2015","Quarter":"1","Month":"2","DayofMonth":"1","DayOfWeek":"7","FlightDate":"2015-02-01","Carrier":"AA","TailNum":"N796AA","FlightNum":"1","Origin":"JFK","OriginCityName":"New York, NY","OriginState":"NY","Dest":"LAX","DestCityName":"Los Angeles, CA","DestState":"CA","DepTime":"0857","DepDelay":-3.0,"DepDelayMinutes":0,"TaxiOut":15.0,"TaxiIn":24.0,"WheelsOff":"0912","WheelsOn":"1135","ArrTime":"1159","ArrDelay":-36.0,"ArrDelayMinutes":0.0,"Cancelled":0,"Diverted":0,"ActualElapsedTime":362.0,"AirTime":323.0,"Flights":1,"Distance":2475.0,"CRSDepTime":"0900","CRSArrTime":"1235"}}]}}
+
+

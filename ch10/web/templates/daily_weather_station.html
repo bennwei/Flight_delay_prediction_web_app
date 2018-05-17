@@ -1,0 +1,75 @@
+{% extends "layout.html" %}
+{% block body %}
+  <div>
+    <!-- Navigation guide -->
+    <ol class="breadcrumb">
+      <li><a href="/">Home</a></li>
+      <li><a href="/weather">Weather</a></li>
+      <li><a href="/weather/station/{{profile_observations.WBAN}}">Station {{profile_observations.WBAN}}</a></li>
+      <li><a href="/weather/station/{{profile_observations.WBAN}}/observations/daily/{{profile_observations.Date}}">
+        Hourly Observations - {{profile_observations.Date}}</a></li>
+    </ol>
+
+    <p class="lead">{{profile_observations.Observations|length}} Observations</p>
+
+    <!-- Station Profile -->
+    <table class="table">
+      <thead>
+        <th>WBAN ID</th>
+        <th>Station Name</th>
+        <th>Station Type</th>
+        <th>Location</th>
+        <th>Country</th>
+        <th>Elevation</th>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{{profile_observations.Profile.WBAN_ID}}</td>
+          <td>{{profile_observations.Profile.STATION_NAME}}</td>
+          <td>{{profile_observations.Profile.STATION_TYPE}}</td>
+          <td>{{profile_observations.Profile.LOCATION}}</td>
+          <td>{{profile_observations.Profile.COUNTRY}}</td>
+          <td>{{profile_observations.Profile.ELEV_GROUND}}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Weather Observations for that Day -->
+    <table class="table table-condensed table-striped">
+      <thead>
+        <th>Time</th>
+        <th>Dry Bulb (C)</th>
+        <th>Wet Bulb (C)</th>
+        <th>Dew Point (C)</th>
+        <th>Relative Humidity</th>
+        <th>Sky Condition</th>
+        <th>Visibility</th>
+        <th>Weather Type</th>
+        <th>Barometric Pressure</th>
+        <th>Wind Direction</th>
+        <th>Wind Speed</th>
+        <th>Wind Character</th>
+        <th>Precipitation</th>
+      </thead>
+      <tbody>
+        {% for observation in profile_observations.Observations %}
+        <tr>
+          <td>{{observation.Datetime}}</td>
+          <td>{{observation.DryBulbCelsius}}</td>
+          <td>{{observation.WetBulbCelsius}}</td>
+          <td>{{observation.DewPointCelsius}}</td>
+          <td>{{observation.RelativeHumidity}}</td>
+          <td>{{observation.SkyCondition}}</td>
+          <td>{{observation.Visibility}}</td>
+          <td>{{observation.WeatherType}}</td>
+          <td>{{observation.StationPressure}}</td>
+          <td>{{observation.WindDirection}}</td>
+          <td>{{observation.WindSpeed}}</td>
+          <td>{{observation.ValueForWindCharacter}}</td>
+          <td>{{observation.HourlyPrecip}}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends "layout.html" %}
+{% block body %}
+  <!-- Navigation guide -->
+  / <a href="/airplanes">Airplanes</a>
+
+  <p class="lead" style="margin: 10px; margin-left: 0px;">
+    <!-- Airline Name and website-->
+    US Commercial Fleet
+  </p>
+
+  <!-- Chart of fleet manufacturers -->
+  <div>
+    <p style="margin: 0px;">Airplanes by Manufacturer</p>
+    <div id="chart"><svg class="chart"></svg></div>
+  </div>
+  <script src="/static/airplanes.js"></script>
+
+  <!-- Generate form from search_config and request args -->
+  <form action="/airplanes" method="get">
+    {% for item in search_config %}
+      {% if 'label' in item %}
+        <label for="{{item['field']}}">{{item['label']}}</label>
+      {% else %}
+        <label for="{{item['field']}}">{{item['field']}}</label>
+      {% endif %}
+        <input name="{{item['field']}}" style="width: 36px; margin-right: 10px;" value="{{args[item['field']] if args[item['field']] else ''}}"></input>
+    {% endfor %}
+    <button type="submit" class="btn btn-xs btn-default" style="height: 25px">Submit</button>
+  </form>
+
+  <table class="table table-condensed table-striped">
+    <!-- Create table header, based on search_config -->
+    <thead>
+      {% for item in search_config %}
+        {% if 'label' in item %}
+          <th>{{item['label']}}</th>
+        {% else %}
+          <th>{{item['field']}}</th>
+        {% endif %}
+      {% endfor %}
+    </thead>
+
+    <!-- Create table content, based on airplanes for each <tr> and search_config for each <td> -->
+    <tbody>
+      {% for airplane in airplanes %}
+      <tr>
+        {% for item in search_config %}
+          <td>{{airplane[item['field']]}}</td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- css for x axis in chart -->
+  <style>
+    .axis text {
+      font: 8px sans-serif;
+    }
+
+    .axis path,
+    .axis line {
+      fill: none;
+      stroke: #000;
+      shape-rendering: crispEdges;
+    }
+
+    .bar {
+      fill: #ff6600;
+    }
+  </style>
+
+{% import "macros.jnj" as common %}
+{% if nav_offsets and nav_path -%}
+  {{ common.display_nav(nav_offsets, nav_path, airplane_count)|safe }}
+{% endif -%}
+{% endblock %}

@@ -1,0 +1,91 @@
+bash: /c/Users/Eric Liao/.bash_profile: line 3: syntax error near unexpected tok                                en `('
+bash: /c/Users/Eric Liao/.bash_profile: line 3: `export PATH=/c/Users/Eric Liao/                                bin:/mingw64/bin:/usr/local/bin:/usr/bin:/bin:/mingw64/bin:/usr/bin:/c/Users/Eri                                c Liao/bin:/c/Program Files (x86)/Google/Chrome/Application:/c/Program Files (x8                                6)/Intel/iCLS Client:/c/Program Files/Intel/iCLS Client:/c/Windows/system32:/c/W                                indows:/c/Windows/System32/Wbem:/c/Windows/System32/WindowsPowerShell/v1.0:/c/Pr                                ogram Files/Intel/WiFi/bin:/c/Program Files/Common Files/Intel/WirelessCommon:/c                                /Program Files (x86)/Intel/Intel(R) Management Engine Components/DAL:/c/Program                                 Files/Intel/Intel(R) Management Engine Components/DAL:/c/Program Files (x86)/Int                                el/Intel(R) Management Engine Components/IPT:/c/Program Files/Intel/Intel(R) Man                                agement Engine Components/IPT:/c/HashiCorp/Vagrant/bin:/c/Users/Eric Liao/Anacon                                da3:/c/Users/Eric Liao/Anaconda3/Scripts:/c/Users/Eric Liao/Anaconda3/Library/bi                                n:/c/Users/Eric Liao/AppData/Local/Microsoft/WindowsApps:/usr/bin/vendor_perl:/u                                sr/bin/core_perl:/d/Projects/Agile_Data_Code_2/bin:/d/Projects/Agile_Data_Code_2                                /bin'
+
+Eric Liao@DESKTOP-8VSRI7A MINGW64 ~
+$ ./ec2.sh
+bash: ./ec2.sh: No such file or directory
+
+Eric Liao@DESKTOP-8VSRI7A MINGW64 ~
+$ cd /d/Projects/Agile_Data_Code_2
+
+Eric Liao@DESKTOP-8VSRI7A MINGW64 /d/Projects/Agile_Data_Code_2 (master)
+$ ./ec2.sh
+
+Welcome to Agile Data Science 2.0 :)
+
+I will launch an r3.xlarge instance in the default VPC for you, using a key and security group we wil           l create.
+
+The utility 'jq' is required for this script to detect the hostname of your ec2 instance ...
+Detecting 'jq' ...
+'jq' was detected ...
+Creating security group 'agile_data_science' ...
+{
+    "GroupId": "sg-1c762a7b"
+}
+
+Detecting external IP address ...
+./ec2.sh: line 36: dig: command not found
+Authorizing port 22 to your external IP () in security group 'agile_data_science' ...
+
+An error occurred (InvalidParameterValue) when calling the AuthorizeSecurityGroupIngress operation: C           IDR block C:/Program Files/Git/32 is malformed
+
+Generating keypair called 'agile_data_science' ...
+Changing permissions of 'agile_data_science.pem' to 0600 ...
+
+Detecting the default region...
+The default region is 'us-west-1'
+Determining the image ID to use according to region...
+The image for region 'us-west-1' is 'ami-818fdfe1' ...
+
+Initializing EBS optimized r3.xlarge EC2 instance in region 'us-west-1' with security group 'agile_da           ta_science', key name 'agile_data_science' and image id 'ami-818fdfe1' using the script 'aws/ec2_boot           strap.sh'
+
+An error occurred (PendingVerification) when calling the RunInstances operation: Your account is curr           ently being verified. Verification normally takes less than 2 hours. Until your account is verified,            you may not be able to launch additional instances or create additional volumes. If you are still rec           eiving this message after more than 2 hours, please let us know by writing to aws-verification@amazon           .com. We appreciate your patience.
+Got reservation ID '' ...
+
+Sleeping 10 seconds before inquiring to get the public hostname of the instance we just created ...
+...
+Awake!
+
+Using the reservation ID to get the public hostname ...
+The public hostname of the instance we just created is '' ...
+Writing hostname to '.ec2_hostname' ...
+
+Now we will tag this ec2 instance and name it 'agile_data_science_ec2' ...
+
+An error occurred (MissingParameter) when calling the CreateTags operation: The request must contain            the parameter resourceIdSet
+
+After a few minutes (for it to initialize), you may ssh to this machine via the command in red:
+ssh -i ./agile_data_science.pem ubuntu@
+Note: only your IP of '' is authorized to connect to this machine.
+
+NOTE: IT WILL TAKE SEVERAL MINUTES FOR THIS MACHINE TO INITIALIZE. PLEASE WAIT FIVE MINUTES BEFORE LO           GGING IN.
+
+Note: if you ssh to this machine after a few minutes and there is no software in $HOME, please wait a            few minutes for the install to finish.
+
+Once you ssh in, the exercise code is in the Agile_Data_Code_2 directory! Run all files from this dir           ectory, with the exception of the web applications, which you will run from ex. ch08/web
+
+Note: after a few minutes, now you will need to run ./ec2_create_tunnel.sh to forward ports 5000 and            8888 on the ec2 instance to your local ports 5000 and 8888. This way you can run the example web appl           ications on the ec2 instance and browse them at http://localhost:5000 and you can view Jupyter notebo           oks at http://localhost:8888
+If you tire of the ssh tunnel port forwarding, you may end these connections by executing ./ec2_kill_           tunnel.sh
+
+-----------------------------------------------------------------------------------------------------           ----------------
+
+Thanks for trying Agile Data Science 2.0!
+
+If you have ANY problems, please file an issue on Github at https://github.com/rjurney/Agile_Data_Cod           e_2/issues and I will resolve them.
+
+If you need help creating your own applications, or with on-site or video training...
+Check out Data Syndrome at http://datasyndrome.com
+
+Enjoy! Russell Jurney <@rjurney> <russell.jurney@gmail.com> <http://linkedin.com/in/russelljurney>
+
+
+Eric Liao@DESKTOP-8VSRI7A MINGW64 /d/Projects/Agile_Data_Code_2 (master)
+$ ssh -i ./agile_data_science.pem ubuntu@
+ssh: connect to host  port 22: Connection refused
+
+Eric Liao@DESKTOP-8VSRI7A MINGW64 /d/Projects/Agile_Data_Code_2 (master)
+$ dig
+bash: dig: command not found
+
+Eric Liao@DESKTOP-8VSRI7A MINGW64 /d/Projects/Agile_Data_Code_2 (master)
+$

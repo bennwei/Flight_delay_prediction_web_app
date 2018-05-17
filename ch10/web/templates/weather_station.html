@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+{% block body %}
+  <div>
+    <!-- Navigation guide -->
+    <ol class="breadcrumb">
+      <li><a href="/">Home</a></li>
+      <li><a href="/weather">Weather</a></li>
+      <li><a href="/weather/station/{{profile_observations.WBAN}}">Station {{profile_observations.WBAN}}</a></li>
+    </ol>
+
+    <p class="lead">Weather Station {{profile_obserations.Profile.STATION_NAME}}</p>
+
+  </div>
+{% endblock %}

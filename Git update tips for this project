@@ -1,0 +1,10 @@
+
+
+I couldn't find the answer to this question (i.e. the work-flow) in any of Google's documents... so here's my practical experience using Android Studio and Git completely from a UI.
+
+(I vomit at the thought of switching between command line and IDE - it means the IDE is lacking!)
+
+Stash your changes with: Right Click Project -> Git -> Repository -> Stash Changes. Give it a name.
+Pull updates that your colleague did with: Right Click Project -> Git -> Repository -> Pull
+Merge back your code changes with: Right Click Project -> Git -> Repository -> UnStash Changes -> Apply Stash
+You will then see a "Files Merged with Conflicts" UI. This is where you select a file and selectively merge.

@@ -1,0 +1,17 @@
+https://davidwalsh.name/curl-post-file
+http://localhost:5000/on_time_performance?Carrier=AA&FlightDate=2015-01-01&FlightNum=1519
+http://blog.luisrei.com/articles/flaskrest.html
+http://stackoverflow.com/questions/7172784/how-to-post-json-data-with-curl-from-terminal-commandline-to-test-spring-rest
+https://airflow.incubator.apache.org/cli.html
+https://en.wikipedia.org/wiki/Scientific_method
+http://www.slideshare.net/xamat/agile-science
+https://www.tutorialspoint.com/python/dictionary_update.htm
+https://docs.python.org/3/library/string.html#formatstrings
+http://stackoverflow.com/questions/2943222/find-objects-between-two-dates-mongodb
+https://spark.apache.org/docs/2.0.2/api/java/org/apache/spark/sql/SparkSession.html
+http://stackoverflow.com/questions/3908156/grep-output-to-show-only-matching-file
+https://github.com/mongodb/mongo-hadoop/tree/master/spark/src/main/python
+http://stackoverflow.com/questions/2943222/find-objects-between-two-dates-mongodb
+http://stackoverflow.com/questions/19819870/date-query-with-isodate-in-mongodb-doesnt-seem-to-work
+http://stackoverflow.com/questions/27523337/how-to-query-to-mongo-using-spark
+https://github.com/mongodb/mongo-hadoop/blob/master/spark/src/main/python/pymongo_spark.py

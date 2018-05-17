@@ -1,0 +1,14 @@
+<!-- Display two navigation links for previous/next page in the email list -->
+{% macro display_nav(offsets, path, count) -%}
+  <div style="text-align: center;">
+    {% for key, values in offsets.items() -%}
+      {%- if values['bottom_offset'] >= 0 and values['top_offset'] > 0 and count > values['bottom_offset'] -%}
+        <a style="margin-left: 20px; margin-right: 20px;" href="{{ path }}?start={{ values
+          ['bottom_offset'] }}&end={{ values['top_offset'] }}{%- if query -%}?search=
+          {{query}}{%- endif -%}">{{ key }}</a>
+      {% else -%}
+        {{ key }}
+      {% endif %}
+    {% endfor -%}
+  </div>
+{% endmacro -%}

@@ -1,0 +1,213 @@
+ssh://vagrant@127.0.0.1:2222/home/vagrant/anaconda/bin/python /home/vagrant/.pycharm_helpers/pydev/pydevconsole.py 0 0
+import sys; print('Python %s on %s' % (sys.version, sys.platform))
+sys.path.extend(['/vagrant', '/vagrant'])
+Python 3.5.3 |Continuum Analytics, Inc.| (default, Mar  6 2017, 11:58:13)
+[GCC 4.4.7 20120313 (Red Hat 4.4.7-1)] on linux
+import sys, os, re
+sys.path.append("lib")
+from lib import utils
+import numpy as np
+import sklearn
+import iso8601
+import datetime
+print("Imports loaded...")
+Imports loaded...
+# Load and check the size of our training data. May take a minute.
+print("Original JSON file size: {:,} Bytes".format(os.path.getsize("/home/vagrant/Agile_Data_Code_2/data/simple_flight_delay_features.jsonl")))
+Original JSON file size: 1,590,999,638 Bytes
+training_data = utils.read_json_lines_file('/home/vagrant/Agile_Data_Code_2/data/simple_flight_delay_features.jsonl')
+print("Training items: {:,}".format(len(training_data))) # 5,714,008
+print("Data loaded...")
+Training items: 5,714,008
+Data loaded...
+print("Size of training data in RAM: {:,} Bytes".format(sys.getsizeof(training_data))) # 50MB
+print(training_data[0])
+Size of training data in RAM: 50,897,424 Bytes
+{'Carrier': 'AA', 'CRSArrTime': '2015-01-01T18:10:00.000Z', 'DayOfWeek': 4, 'FlightNum': '1024', 'DepDelay': 14.0, 'DayOfMonth': 1, 'CRSDepTime': '2015-01-01T15:30:00.000Z', 'Distance': 569.0, 'Origin': 'ABQ', 'FlightDate': '2015-01-01T00:00:00.000Z', 'ArrDelay': 13.0, 'DayOfYear': 1, 'Dest': 'DFW'}
+# # Sample down our training data at first...
+sampled_training_data = training_data.np.random.choice(training_data, 1000000)
+print("Sampled items: {:,} Bytes".format(len(training_data)))
+print("Data sampled...")
+Traceback (most recent call last):
+  File "/home/vagrant/anaconda/lib/python3.5/site-packages/IPython/core/interactiveshell.py", line 2847, in run_code
+    exec(code_obj, self.user_global_ns, self.user_ns)
+  File "<ipython-input-7-d568b206a108>", line 2, in <module>
+    sampled_training_data = training_data.np.random.choice(training_data, 1000000)
+AttributeError: 'list' object has no attribute 'np'
+sampled_training_data = np.random.choice(training_data, 1000000)
+print("Sampled items: {:,} Bytes".format(len(training_data)))
+print("Data sampled...")
+Sampled items: 5,714,008 Bytes
+Data sampled...
+print("Sampled items: {:,} Bytes".format(len(sampled_training_data
+)))
+Sampled items: 1,000,000 Bytes
+results = [record['ArrDelay'] for record in sampled_training_data]
+results_vector = np.array(results)
+results[0]
+Out[12]: 8.0
+results_vector[0]
+Out[13]: 8.0
+sys.getsizeof(results_vector) # 45,712,160 Bytes
+print("Results vectorized...")
+Results vectorized...
+# Remove the two delay fields and the flight date from our training data
+for item in sampled_training_data:
+  item.pop('ArrDelay', None)
+  item.pop('FlightDate', None)
+print("ArrDelay and FlightDate removed from training data...")
+ArrDelay and FlightDate removed from training data...
+for item in sampled_training_data:
+  if isinstance(item['CRSArrTime'], str):
+    dt = iso8601.parse_date(item['CRSArrTime'])
+    unix_time = int(dt.timestamp())
+    item['CRSArrTime'] = unix_time
+  if isinstance(item['CRSDepTime'], str):
+    dt = iso8601.parse_date(item['CRSDepTime'])
+    unix_time = int(dt.timestamp())
+    item['CRSDepTime'] = unix_time
+print("Datetimes converted to unix times...")
+Datetimes converted to unix times...
+# Use DictVectorizer to convert feature dicts to vectors
+from sklearn.feature_extraction import DictVectorizer
+print("Original dimensions: [{:,}]".format(len(sampled_training_data)))
+vectorizer = DictVectorizer()
+training_vectors = vectorizer.fit_transform(sampled_training_data)
+print("Size of DictVectorized vectors: {:,} Bytes".format(training_vectors.data.nbytes))
+print("Training data vectorized...")
+Original dimensions: [1,000,000]
+Size of DictVectorized vectors: 87,540,112 Bytes
+Training data vectorized...
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(
+  training_vectors,
+  results_vector,
+  test_size=0.1,
+  random_state=43
+)
+print(X_train.shape, X_test.shape)
+print(y_train.shape, y_test.shape)
+print("Test train split performed...")
+(900000, 7433) (100000, 7433)
+(900000,) (100000,)
+Test train split performed...
+# Train a regressor
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split, cross_val_predict
+from sklearn.metrics import median_absolute_error, r2_score
+print("Regressor library and metrics imported...")
+Regressor library and metrics imported...
+regressor = LinearRegression()
+print("Regressor instantiated...")
+Regressor instantiated...
+from sklearn.ensemble import GradientBoostingRegressor
+regressor = GradientBoostingRegressor
+print("Swapped gradient boosting trees for linear regression!")
+# Lets go back for now...
+regressor = LinearRegression()
+print("Swapped back to linear regression!")
+Swapped gradient boosting trees for linear regression!
+Swapped back to linear regression!
+regressor.fit(X_train, y_train)
+print("Regressor fitted...")
+Regressor fitted...
+predicted = regressor.predict(X_test)
+print("Predictions made for X_test...")
+Predictions made for X_test...
+# Median absolute error is the median of all absolute differences between the target and the prediction.
+# Less is better, more indicates a high error between target and prediction.
+medae = median_absolute_error(y_test, predicted)
+print("Median absolute error:    {:.3g}".format(medae))
+Median absolute error:    10.1
+# R2 score is the coefficient of determination. Ranges from 1-0, 1.0 is best, 0.0 is worst.
+# Measures how well future samples are likely to be predicted.
+r2 = r2_score(y_test, predicted)
+print("r2 score:                 {:.3g}".format(r2))
+r2 score:                 0.834
+import matplotlib.pyplot as plt
+plt.scatter(
+  y_test,
+  predicted,
+  color='blue',
+  linewidth=1
+)
+plt.xticks(())
+plt.yticks(())
+plt.show()
+QXcbConnection: Could not connect to display
+bash: line 1:  3791 Aborted                 (core dumped) env "PYTHONUNBUFFERED"="1" "PYTHONPATH"="/vagrant:/home/vagrant/.pycharm_helpers/pydev" "PYCHARM_HOSTED"="1" "IPYTHONENABLE"="True" "PYTHONDONTWRITEBYTECODE"="1" "JETBRAINS_REMOTE_RUN"="1" "PYTHONIOENCODING"="UTF-8" /home/vagrant/anaconda/bin/python /home/vagrant/.pycharm_helpers/pydev/pydevconsole.py 0 0
+Process finished with exit code 134
+
+
+print("Testing model persistance...")
+import pickle
+Testing model persistance...
+# project_home = os.environ["/home/vagrant/Agile_Data_Code_2"]
+project_home = "/home/vagrant/Agile_Data_Code_2"
+# Dump the model itself
+regressor_path = "{}/models/sklearn_regressor.pkl".format(project_home)
+regressor_bytes = pickle.dumps(regressor)
+model_f = open(regressor_path, 'wb')
+model_f.write(regressor_bytes)
+Traceback (most recent call last):
+  File "/home/vagrant/anaconda/lib/python3.5/site-packages/IPython/core/interactiveshell.py", line 2847, in run_code
+    exec(code_obj, self.user_global_ns, self.user_ns)
+  File "<ipython-input-5-faab603bf286>", line 2, in <module>
+    model_f = open(regressor_path, 'wb')
+FileNotFoundError: [Errno 2] No such file or directory: '/home/vagrant/Agile_Data_Code_2/models/sklearn_regressor.pkl'
+regressor_name = "sklearn_regressor.pkl"
+regressor_bytes = pickle.dumps(regressor, open(regressor_name, 'wb'))
+Traceback (most recent call last):
+  File "/home/vagrant/anaconda/lib/python3.5/site-packages/IPython/core/interactiveshell.py", line 2847, in run_code
+    exec(code_obj, self.user_global_ns, self.user_ns)
+  File "<ipython-input-6-ab00dd8c6fc0>", line 3, in <module>
+    regressor_bytes = pickle.dumps(regressor, open(regressor_name, 'wb'))
+TypeError: an integer is required (got type _io.BufferedWriter)
+regressor_name = "sklearn_regressor.pkl"
+pickle.dumps(regressor, open(regressor_name, 'wb'))
+Traceback (most recent call last):
+  File "/home/vagrant/anaconda/lib/python3.5/site-packages/IPython/core/interactiveshell.py", line 2847, in run_code
+    exec(code_obj, self.user_global_ns, self.user_ns)
+  File "<ipython-input-7-390697ea7128>", line 3, in <module>
+    pickle.dumps(regressor, open(regressor_name, 'wb'))
+TypeError: an integer is required (got type _io.BufferedWriter)
+regressor_name = "sklearn_regressor.pkl"
+pickle.dump(regressor, open(regressor_name, 'wb'))
+vectorizer_name = "sklearn_vectorizer.pkl"
+pickle.dumps(vectorizer, open(vectorizer_name, 'wb'))
+Traceback (most recent call last):
+  File "/home/vagrant/anaconda/lib/python3.5/site-packages/IPython/core/interactiveshell.py", line 2847, in run_code
+    exec(code_obj, self.user_global_ns, self.user_ns)
+  File "<ipython-input-9-501f3a73ce8a>", line 3, in <module>
+    pickle.dumps(vectorizer, open(vectorizer_name, 'wb'))
+TypeError: an integer is required (got type _io.BufferedWriter)
+vectorizer_name = "sklearn_vectorizer.pkl"
+pickle.dump(vectorizer, open(vectorizer_name, 'wb'))
+#
+# Persist model using sklearn.externals.joblib
+#
+from sklearn.externals import joblib
+# Dump the model and vectorizer
+# joblib.dump(regressor, regressor_path)
+# joblib.dump(vectorizer, vectorizer_path)
+joblib.dump(regressor, '../data/sklearn_regressor.pkl')
+joblib.dump(vectorizer, '../data/sklearn_vectorizer.pkl')
+Traceback (most recent call last):
+  File "/home/vagrant/anaconda/lib/python3.5/site-packages/IPython/core/interactiveshell.py", line 2847, in run_code
+    exec(code_obj, self.user_global_ns, self.user_ns)
+  File "<ipython-input-11-107035f48b56>", line 10, in <module>
+    joblib.dump(regressor, '../data/sklearn_regressor.pkl')
+  File "/home/vagrant/anaconda/lib/python3.5/site-packages/sklearn/externals/joblib/numpy_pickle.py", line 482, in dump
+    with open(filename, 'wb') as f:
+PermissionError: [Errno 13] Permission denied: '../data/sklearn_regressor.pkl'
+#
+# Persist model using sklearn.externals.joblib
+#
+from sklearn.externals import joblib
+# Dump the model and vectorizer
+# joblib.dump(regressor, regressor_path)
+# joblib.dump(vectorizer, vectorizer_path)
+joblib.dump(regressor, 'sklearn_regressor.pkl')
+joblib.dump(vectorizer, 'sklearn_vectorizer.pkl')
+Out[12]: ['sklearn_vectorizer.pkl']
+

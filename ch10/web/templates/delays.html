@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+{% block body %}
+  <div>
+      <!-- Navigation guide -->
+      / <a href="/delays">Delays</a>
+
+      <p class="lead" style="margin: 10px; margin-left: 0px;">
+        <!-- Airline Name and website-->
+        Summary of Flight Delays
+      </p>
+
+    <div id="chart"><svg class="chart"></svg></div>
+    <script src="/static/barchart.js"></script>
+    <link href="/static/bar.css" type="text/css" rel="stylesheet" />
+
+    <script>
+        var barChart = new BarChart('/weather_delay_histogram.json');
+        barChart.render();
+    </script>
+  </div>
+{% endblock %}

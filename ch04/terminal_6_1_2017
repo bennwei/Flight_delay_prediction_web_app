@@ -1,0 +1,522 @@
+Welcome to Ubuntu 12.04 LTS (GNU/Linux 3.2.0-23-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com/
+
+180 packages can be updated.
+107 updates are security updates.
+
+New release '14.04.5 LTS' available.
+Run 'do-release-upgrade' to upgrade to it.
+
+
+
+Welcome to your Vagrant-built virtual machine.
+Last login: Thu Jun  1 06:42:07 2017 from 10.0.2.2
+vagrant@precise64:~$ ipconfig
+No command 'ipconfig' found, did you mean:
+ Command 'tpconfig' from package 'tpconfig' (universe)
+ Command 'iwconfig' from package 'wireless-tools' (main)
+ Command 'ifconfig' from package 'net-tools' (main)
+ipconfig: command not found
+vagrant@precise64:~$ ifconfig
+eth0      Link encap:Ethernet  HWaddr 08:00:27:88:0c:a6
+          inet addr:10.0.2.15  Bcast:10.0.2.255  Mask:255.255.255.0
+          inet6 addr: fe80::a00:27ff:fe88:ca6/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:44067 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:22432 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000
+          RX bytes:62065502 (62.0 MB)  TX bytes:1299318 (1.2 MB)
+
+lo        Link encap:Local Loopback
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          inet6 addr: ::1/128 Scope:Host
+          UP LOOPBACK RUNNING  MTU:16436  Metric:1
+          RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:0
+          RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)
+
+vagrant@precise64:~$ curl -XGET 'localhost:9200/_cat/indices?v&pretty'
+curl: (7) couldn't connect to host
+vagrant@precise64:~$ sudo initctl elasticsearch status
+initctl: invalid command: elasticsearch
+Try `initctl --help' for more information.
+vagrant@precise64:~$ curl -XGET http://127.0.0.1:9200
+curl: (7) couldn't connect to host
+vagrant@precise64:~$ /home/vagrant/elasticsearch/bin/elasticsearch -d
+vagrant@precise64:~$ curl -XGET http://127.0.0.1:9200
+curl: (7) couldn't connect to host
+vagrant@precise64:~$ sudo initctl elasticsearch status
+initctl: invalid command: elasticsearch
+Try `initctl --help' for more information.
+vagrant@precise64:~$ curl 'localhost:9200/agile_data_science/on_time_performance/_search?q=Origin:ATL&pretty'
+{
+  "took" : 348,
+  "timed_out" : false,
+  "_shards" : {
+    "total" : 5,
+    "successful" : 5,
+    "failed" : 0
+  },
+  "hits" : {
+    "total" : 379424,
+    "max_score" : 2.733009,
+    "hits" : [
+      {
+        "_index" : "agile_data_science",
+        "_type" : "on_time_performance",
+        "_id" : "AVw3hnWS-QhAfTbunwop",
+        "_score" : 2.733009,
+        "_source" : {
+          "Year" : "2015",
+          "Quarter" : "3",
+          "Month" : "7",
+          "DayofMonth" : "19",
+          "DayOfWeek" : "7",
+          "FlightDate" : "2015-07-19",
+          "Carrier" : "AA",
+          "TailNum" : "N4WPAA",
+          "FlightNum" : "1574",
+          "Origin" : "ATL",
+          "OriginCityName" : "Atlanta, GA",
+          "OriginState" : "GA",
+          "Dest" : "ORD",
+          "DestCityName" : "Chicago, IL",
+          "DestState" : "IL",
+          "DepTime" : "0755",
+          "DepDelay" : -5.0,
+          "DepDelayMinutes" : 0,
+          "TaxiOut" : 18.0,
+          "TaxiIn" : 19.0,
+          "WheelsOff" : "0813",
+          "WheelsOn" : "0842",
+          "ArrTime" : "0901",
+          "ArrDelay" : -12.0,
+          "ArrDelayMinutes" : 0.0,
+          "Cancelled" : 0,
+          "Diverted" : 0,
+          "ActualElapsedTime" : 126.0,
+          "AirTime" : 89.0,
+          "Flights" : 1,
+          "Distance" : 606.0,
+          "CRSDepTime" : "0800",
+          "CRSArrTime" : "0913"
+        }
+      },
+      {
+        "_index" : "agile_data_science",
+        "_type" : "on_time_performance",
+        "_id" : "AVw3hnYu-QhAfTbunwvP",
+        "_score" : 2.733009,
+        "_source" : {
+          "Year" : "2015",
+          "Quarter" : "3",
+          "Month" : "7",
+          "DayofMonth" : "19",
+          "DayOfWeek" : "7",
+          "FlightDate" : "2015-07-19",
+          "Carrier" : "AA",
+          "TailNum" : "N542UW",
+          "FlightNum" : "626",
+          "Origin" : "ATL",
+          "OriginCityName" : "Atlanta, GA",
+          "OriginState" : "GA",
+          "Dest" : "CLT",
+          "DestCityName" : "Charlotte, NC",
+          "DestState" : "NC",
+          "DepTime" : "1637",
+          "DepDelay" : 162.0,
+          "DepDelayMinutes" : 162,
+          "TaxiOut" : 34.0,
+          "TaxiIn" : 3.0,
+          "WheelsOff" : "1711",
+          "WheelsOn" : "1750",
+          "ArrTime" : "1753",
+          "ArrDelay" : 158.0,
+          "ArrDelayMinutes" : 158.0,
+          "Cancelled" : 0,
+          "Diverted" : 0,
+          "ActualElapsedTime" : 76.0,
+          "AirTime" : 39.0,
+          "Flights" : 1,
+          "Distance" : 226.0,
+          "CarrierDelay" : 15.0,
+          "WeatherDelay" : 0.0,
+          "NASDelay" : 0.0,
+          "SecurityDelay" : 0.0,
+          "LateAircraftDelay" : 143.0,
+          "CRSDepTime" : "1355",
+          "CRSArrTime" : "1515"
+        }
+      },
+      {
+        "_index" : "agile_data_science",
+        "_type" : "on_time_performance",
+        "_id" : "AVw3hnZ9-QhAfTbunw0h",
+        "_score" : 2.733009,
+        "_source" : {
+          "Year" : "2015",
+          "Quarter" : "1",
+          "Month" : "1",
+          "DayofMonth" : "14",
+          "DayOfWeek" : "3",
+          "FlightDate" : "2015-01-14",
+          "Carrier" : "WN",
+          "TailNum" : "N275WN",
+          "FlightNum" : "102",
+          "Origin" : "ATL",
+          "OriginCityName" : "Atlanta, GA",
+          "OriginState" : "GA",
+          "Dest" : "MCO",
+          "DestCityName" : "Orlando, FL",
+          "DestState" : "FL",
+          "DepTime" : "1705",
+          "DepDelay" : 10.0,
+          "DepDelayMinutes" : 10,
+          "TaxiOut" : 10.0,
+          "TaxiIn" : 7.0,
+          "WheelsOff" : "1715",
+          "WheelsOn" : "1817",
+          "ArrTime" : "1824",
+          "ArrDelay" : -1.0,
+          "ArrDelayMinutes" : 0.0,
+          "Cancelled" : 0,
+          "Diverted" : 0,
+          "ActualElapsedTime" : 79.0,
+          "AirTime" : 62.0,
+          "Flights" : 1,
+          "Distance" : 404.0,
+          "CRSDepTime" : "1655",
+          "CRSArrTime" : "1825"
+        }
+      },
+      {
+        "_index" : "agile_data_science",
+        "_type" : "on_time_performance",
+        "_id" : "AVw3hnab-QhAfTbunw1C",
+        "_score" : 2.733009,
+        "_source" : {
+          "Year" : "2015",
+          "Quarter" : "3",
+          "Month" : "7",
+          "DayofMonth" : "19",
+          "DayOfWeek" : "7",
+          "FlightDate" : "2015-07-19",
+          "Carrier" : "AA",
+          "TailNum" : "N571UW",
+          "FlightNum" : "671",
+          "Origin" : "ATL",
+          "OriginCityName" : "Atlanta, GA",
+          "OriginState" : "GA",
+          "Dest" : "PHX",
+          "DestCityName" : "Phoenix, AZ",
+          "DestState" : "AZ",
+          "DepTime" : "1935",
+          "DepDelay" : 85.0,
+          "DepDelayMinutes" : 85,
+          "TaxiOut" : 26.0,
+          "TaxiIn" : 5.0,
+          "WheelsOff" : "2001",
+          "WheelsOn" : "2011",
+          "ArrTime" : "2016",
+          "ArrDelay" : 65.0,
+          "ArrDelayMinutes" : 65.0,
+          "Cancelled" : 0,
+          "Diverted" : 0,
+          "ActualElapsedTime" : 221.0,
+          "AirTime" : 190.0,
+          "Flights" : 1,
+          "Distance" : 1587.0,
+          "CarrierDelay" : 20.0,
+          "WeatherDelay" : 0.0,
+          "NASDelay" : 0.0,
+          "SecurityDelay" : 0.0,
+          "LateAircraftDelay" : 45.0,
+          "CRSDepTime" : "1810",
+          "CRSArrTime" : "1911"
+        }
+      },
+      {
+        "_index" : "agile_data_science",
+        "_type" : "on_time_performance",
+        "_id" : "AVw3hna_-QhAfTbunw2_",
+        "_score" : 2.733009,
+        "_source" : {
+          "Year" : "2015",
+          "Quarter" : "1",
+          "Month" : "1",
+          "DayofMonth" : "14",
+          "DayOfWeek" : "3",
+          "FlightDate" : "2015-01-14",
+          "Carrier" : "WN",
+          "TailNum" : "N286WN",
+          "FlightNum" : "362",
+          "Origin" : "ATL",
+          "OriginCityName" : "Atlanta, GA",
+          "OriginState" : "GA",
+          "Dest" : "TPA",
+          "DestCityName" : "Tampa, FL",
+          "DestState" : "FL",
+          "DepTime" : "1503",
+          "DepDelay" : -2.0,
+          "DepDelayMinutes" : 0,
+          "TaxiOut" : 15.0,
+          "TaxiIn" : 4.0,
+          "WheelsOff" : "1518",
+          "WheelsOn" : "1621",
+          "ArrTime" : "1625",
+          "ArrDelay" : -10.0,
+          "ArrDelayMinutes" : 0.0,
+          "Cancelled" : 0,
+          "Diverted" : 0,
+          "ActualElapsedTime" : 82.0,
+          "AirTime" : 63.0,
+          "Flights" : 1,
+          "Distance" : 406.0,
+          "CRSDepTime" : "1505",
+          "CRSArrTime" : "1635"
+        }
+      },
+      {
+        "_index" : "agile_data_science",
+        "_type" : "on_time_performance",
+        "_id" : "AVw3hna_-QhAfTbunw3F",
+        "_score" : 2.733009,
+        "_source" : {
+          "Year" : "2015",
+          "Quarter" : "1",
+          "Month" : "1",
+          "DayofMonth" : "14",
+          "DayOfWeek" : "3",
+          "FlightDate" : "2015-01-14",
+          "Carrier" : "WN",
+          "TailNum" : "N287WN",
+          "FlightNum" : "993",
+          "Origin" : "ATL",
+          "OriginCityName" : "Atlanta, GA",
+          "OriginState" : "GA",
+          "Dest" : "IND",
+          "DestCityName" : "Indianapolis, IN",
+          "DestState" : "IN",
+          "DepTime" : "0955",
+          "DepDelay" : -5.0,
+          "DepDelayMinutes" : 0,
+          "TaxiOut" : 18.0,
+          "TaxiIn" : 6.0,
+          "WheelsOff" : "1013",
+          "WheelsOn" : "1123",
+          "ArrTime" : "1129",
+          "ArrDelay" : -11.0,
+          "ArrDelayMinutes" : 0.0,
+          "Cancelled" : 0,
+          "Diverted" : 0,
+          "ActualElapsedTime" : 94.0,
+          "AirTime" : 70.0,
+          "Flights" : 1,
+          "Distance" : 432.0,
+          "CRSDepTime" : "1000",
+          "CRSArrTime" : "1140"
+        }
+      },
+      {
+        "_index" : "agile_data_science",
+        "_type" : "on_time_performance",
+        "_id" : "AVw3hna_-QhAfTbunw3U",
+        "_score" : 2.733009,
+        "_source" : {
+          "Year" : "2015",
+          "Quarter" : "1",
+          "Month" : "1",
+          "DayofMonth" : "14",
+          "DayOfWeek" : "3",
+          "FlightDate" : "2015-01-14",
+          "Carrier" : "WN",
+          "TailNum" : "N290WN",
+          "FlightNum" : "169",
+          "Origin" : "ATL",
+          "OriginCityName" : "Atlanta, GA",
+          "OriginState" : "GA",
+          "Dest" : "RIC",
+          "DestCityName" : "Richmond, VA",
+          "DestState" : "VA",
+          "DepTime" : "2040",
+          "DepDelay" : -5.0,
+          "DepDelayMinutes" : 0,
+          "TaxiOut" : 24.0,
+          "TaxiIn" : 6.0,
+          "WheelsOff" : "2104",
+          "WheelsOn" : "2215",
+          "ArrTime" : "2221",
+          "ArrDelay" : -4.0,
+          "ArrDelayMinutes" : 0.0,
+          "Cancelled" : 0,
+          "Diverted" : 0,
+          "ActualElapsedTime" : 101.0,
+          "AirTime" : 71.0,
+          "Flights" : 1,
+          "Distance" : 481.0,
+          "CRSDepTime" : "2045",
+          "CRSArrTime" : "2225"
+        }
+      },
+      {
+        "_index" : "agile_data_science",
+        "_type" : "on_time_performance",
+        "_id" : "AVw3hnbA-QhAfTbunw36",
+        "_score" : 2.733009,
+        "_source" : {
+          "Year" : "2015",
+          "Quarter" : "1",
+          "Month" : "1",
+          "DayofMonth" : "14",
+          "DayOfWeek" : "3",
+          "FlightDate" : "2015-01-14",
+          "Carrier" : "WN",
+          "TailNum" : "N297WN",
+          "FlightNum" : "4132",
+          "Origin" : "ATL",
+          "OriginCityName" : "Atlanta, GA",
+          "OriginState" : "GA",
+          "Dest" : "MCO",
+          "DestCityName" : "Orlando, FL",
+          "DestState" : "FL",
+          "DepTime" : "1253",
+          "DepDelay" : 238.0,
+          "DepDelayMinutes" : 238,
+          "TaxiOut" : 11.0,
+          "TaxiIn" : 7.0,
+          "WheelsOff" : "1304",
+          "WheelsOn" : "1409",
+          "ArrTime" : "1416",
+          "ArrDelay" : 231.0,
+          "ArrDelayMinutes" : 231.0,
+          "Cancelled" : 0,
+          "Diverted" : 0,
+          "ActualElapsedTime" : 83.0,
+          "AirTime" : 65.0,
+          "Flights" : 1,
+          "Distance" : 404.0,
+          "CarrierDelay" : 0.0,
+          "WeatherDelay" : 0.0,
+          "NASDelay" : 0.0,
+          "SecurityDelay" : 0.0,
+          "LateAircraftDelay" : 231.0,
+          "CRSDepTime" : "0855",
+          "CRSArrTime" : "1025"
+        }
+      },
+      {
+        "_index" : "agile_data_science",
+        "_type" : "on_time_performance",
+        "_id" : "AVw3hncx-QhAfTbunw84",
+        "_score" : 2.733009,
+        "_source" : {
+          "Year" : "2015",
+          "Quarter" : "1",
+          "Month" : "1",
+          "DayofMonth" : "14",
+          "DayOfWeek" : "3",
+          "FlightDate" : "2015-01-14",
+          "Carrier" : "WN",
+          "TailNum" : "N368SW",
+          "FlightNum" : "1701",
+          "Origin" : "ATL",
+          "OriginCityName" : "Atlanta, GA",
+          "OriginState" : "GA",
+          "Dest" : "DAL",
+          "DestCityName" : "Dallas, TX",
+          "DestState" : "TX",
+          "DepTime" : "2043",
+          "DepDelay" : 3.0,
+          "DepDelayMinutes" : 3,
+          "TaxiOut" : 12.0,
+          "TaxiIn" : 3.0,
+          "WheelsOff" : "2055",
+          "WheelsOn" : "2154",
+          "ArrTime" : "2157",
+          "ArrDelay" : -13.0,
+          "ArrDelayMinutes" : 0.0,
+          "Cancelled" : 0,
+          "Diverted" : 0,
+          "ActualElapsedTime" : 134.0,
+          "AirTime" : 119.0,
+          "Flights" : 1,
+          "Distance" : 721.0,
+          "CRSDepTime" : "2040",
+          "CRSArrTime" : "2210"
+        }
+      },
+      {
+        "_index" : "agile_data_science",
+        "_type" : "on_time_performance",
+        "_id" : "AVw3hncx-QhAfTbunw9b",
+        "_score" : 2.733009,
+        "_source" : {
+          "Year" : "2015",
+          "Quarter" : "1",
+          "Month" : "1",
+          "DayofMonth" : "14",
+          "DayOfWeek" : "3",
+          "FlightDate" : "2015-01-14",
+          "Carrier" : "WN",
+          "TailNum" : "N374SW",
+          "FlightNum" : "799",
+          "Origin" : "ATL",
+          "OriginCityName" : "Atlanta, GA",
+          "OriginState" : "GA",
+          "Dest" : "BWI",
+          "DestCityName" : "Baltimore, MD",
+          "DestState" : "MD",
+          "DepTime" : "1056",
+          "DepDelay" : -4.0,
+          "DepDelayMinutes" : 0,
+          "TaxiOut" : 12.0,
+          "TaxiIn" : 5.0,
+          "WheelsOff" : "1108",
+          "WheelsOn" : "1226",
+          "ArrTime" : "1231",
+          "ArrDelay" : -19.0,
+          "ArrDelayMinutes" : 0.0,
+          "Cancelled" : 0,
+          "Diverted" : 0,
+          "ActualElapsedTime" : 95.0,
+          "AirTime" : 78.0,
+          "Flights" : 1,
+          "Distance" : 577.0,
+          "CRSDepTime" : "1100",
+          "CRSArrTime" : "1250"
+        }
+      }
+    ]
+  }
+}
+vagrant@precise64:~$ curl -XPOST "http://host/logstash-2016.05.19/_search" -d'
+>
+> {
+>   "query": {
+>         { "match": { "serviceName": "systemA" } }
+>   }
+> ^C
+vagrant@precise64:~$ curl -XGET "localhost:9200/agile_data_science/on_time_performance/_search" -d'
+> {
+>   "query": {"bool": {"must": [{"match": {"FlightDate": "2015-02-01"}}, {"match": {"Origin": "JFK"}}, {"match": {"Dest": "LAX"}}]}}, "size": 20, "from": 0, "sort": [{"FlightDate": {"ignore_unmapped": true, "order": "asc"}}, {"DepTime": {"ignore_unmapped": true, "order": "asc"}}, {"Carrier": {"ignore_unmapped": true, "order": "asc"}}, {"FlightNum": {"ignore_unmapped": true, "order": "asc"}}, "_score"]
+> }'
+{"error":{"root_cause":[{"type":"illegal_argument_exception","reason":"[field_sort] unknown field [ignore_unmapped], parser not found"}],"type":"illegal_argument_exception","reason":"[field_sort] unknown field [ignore_unmapped], parser not found"},"status":400}vagvagrant@precise64:~$ curl -XGET "localhost:9200/agile_data_science/on_time_performance/_search" -d'
+> {
+>   'sort': [{'FlightDate': 'asc'}, {'DepTime': 'asc'}, {'Carrier': 'asc'}, {'FlightNum': 'asc'}, '_score']
+> curl -XPOST "http://host/logstash-2016.05.19/_search" -d'
+
+{                                                                                                                                     "query": {                                                                                                                                { "match": { "serviceName": "systemA" } }
+  }^C
+vagrant@precise64:~$ curl -XGET "localhost:9200/agile_data_science/on_time_performance/_search" -d'
+> {
+>   "query": {"bool": {"must": [{"match": {"FlightDate": "2015-02-01"}}, {"match": {"Origin": "JFK"}}, {"match": {"Dest": "LAX"}}]}}, "size": 20, "from": 0, "sort": [{"FlightDate": {"order": "asc"}}, {"DepTime": {"order": "asc"}}, {"Carrier": {"order": "asc"}}, {"FlightNum": {"order": "asc"}}, "_score"]
+> }'
+{"error":{"root_cause":[{"type":"illegal_argument_exception","reason":"Fielddata is disabled on text fields by default. Set fielddata=true on [DepTime] in order to load fielddata in memory by uninverting the inverted index. Note that this can however use significant memory."}],"type":"search_phase_execution_exception","reason":"all shards failed","phase":"query","grouped":true,"failed_shards":[{"shard":0,"index":"agile_data_science","node":"GSxT_I35RyW5Kjl77L-WZQ","reason":{"type":"illegal_argument_exception","reason":"Fielddata is disabled on text fields by default. Set fielddata=true on [DepTime] in order to load fielddata in memory by uninverting the inverted index. Note that this can however use significant memory."}}],"caused_by":{"type":"illegal_argument_exception","reason":"Fielddata is disabled on text fields by default. Set fielddata=true on [DepTime] in order to load fielddata in memory by uninverting the inverted index. Note that this can however use significant memory."}},"status":400}vagrant@precise64:~$
+vagrant@precise64:~$
+vagrant@precise64:~$ curl -XGET "localhost:9200/agile_data_science/on_time_performance/_search" -d'
+> {
+>   "query": {"bool": {"must": [{"match": {"FlightDate": "2015-02-01"}}, {"match": {"Origin": "JFK"}}, {"match": {"Dest": "LAX"}}]}}, "size": 20, "from": 0, "sort": [{"FlightDate": {"order": "asc"}}, {"DepTime": {"order": "asc"}}, {"Carrier": {"order": "asc"}}, {"FlightNum": {"order": "asc"}}, "_score"]
+> }'^C
+vagrant@precise64:~$

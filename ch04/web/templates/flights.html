@@ -1,0 +1,40 @@
+{% extends "layout.html" %}
+{% block body %}
+  <div>
+    <p class="lead">{{flight_count}} Flights on {{flight_date}}</p>
+    <table class="table table-condensed table-striped">
+      <thead>
+        <th>Airline</th>
+        <th>Flight Number</th>
+        <th>Origin</th>
+        <th>Destination</th>
+        <th>Departure Time</th>
+        <th>Tail Number</th>
+        <th>Air Time</th>
+        <th>Distance</th>
+      </thead>
+      <tbody>
+        {% for flight in flights %}
+        <tr>
+          <td>{{flight.Carrier}}</td>
+          <td><a href="/on_time_performance?Carrier={{flight.Carrier}}&FlightDate={{flight.FlightDate}}&FlightNum={{flight.FlightNum}}">{{flight.FlightNum}}</a></td>
+          <td>{{flight.Origin}}</td>
+          <td>{{flight.Dest}}</td>
+          <td>{{flight.DepTime}}</td>
+          <td>{{flight.TailNum}}</td>
+          <td>{{flight.AirTime}}</td>
+          <td>{{flight.Distance}}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% import "macros.jnj" as common %}
+  {% if nav_offsets and nav_path -%}
+     {{ common.display_nav(nav_offsets, nav_path, flight_count, query)|safe }}
+  {% endif -%}
+  <!--<div style="text-align: center">-->
+    <!--<a href="/flights/{{origin}}/{{dest}}/{{flight_date}}?start=0&end=20">Previous</a>-->
+    <!--<a href="/flights/{{origin}}/{{dest}}/{{flight_date}}?start=20&end=40">Next</a>-->
+  <!--</div>-->
+{% endblock %}

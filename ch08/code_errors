@@ -1,0 +1,78 @@
+1. ch08/test_regression_api.sh
+
+#!/usr/bin/env bash
+
+# Fetch the delay prediction for a hypothetical flight
+curl -XPOST 'http://localhost:5000/flights/delays/predict/regress' \
+  -F 'DepDelay=5.0' \
+  -F 'Carrier=AA' \
+  -F 'Date=2016-12-23' \
+  -F 'Dest=ATL' \
+  -F 'FlightNum=1519' \
+  -F 'Origin=SFO' \
+| json_pp
+
+Change "Date" to "FlightDate"
+
+curl -XPOST 'http://localhost:5000/flights/delays/predict/regress' \
+  -F 'DepDelay=5.0' \
+  -F 'Carrier=AA' \
+  -F 'FlightDate=2016-12-23' \
+  -F 'Dest=ATL' \
+  -F 'FlightNum=1519' \
+  -F 'Origin=SFO' \
+| json_pp
+
+2. ch08/train_spark_mllib_model.py
+
+# Turn category fields into indexes
+  for column in ["Carrier", "Origin", "Dest", "Route"]:
+    string_indexer = StringIndexer(
+      inputCol=column,
+      outputCol=column + "_index"
+    )
+
+Should change to
+
+# Turn category fields into indexes
+  for column in ["Carrier", "DayOfMonth", "DayOfWeek", "DayOfYear",
+                 "Origin", "Dest", "Route"]:
+    string_indexer = StringIndexer(
+      inputCol=column,
+      outputCol=column + "_index"
+    )
+
+index_columns = ["Carrier_index", "Origin_index",
+                   "Dest_index", "Route_index"]
+should change to:
+index_columns = ["Carrier_index", "DayOfMonth_index",
+                   "DayOfWeek_index", "DayOfYear_index", "Origin_index",
+                   "Origin_index", "Dest_index", "Route_index"]
+
+3. ch08/train_spark_mllib_model.py
+numeric_columns = [
+    "DepDelay", "Distance",
+    "DayOfMonth", "DayOfWeek",
+    "DayOfYear"]
+
+Should change to:
+
+numeric_columns = ["DepDelay", "Distance"]
+
+4. ch08/make_predictions.py
+
+Also need to change according to #2
+
+____________________________________
+4.
+def classify_flight_delays_realtime_response(unique_id):
+  """Serves predictions to polling requestors"""
+
+  prediction = client.agile_data_science.flight_delay_classification_response.find_one(
+    {
+      "uuid": unique_id
+    }
+  )
+
+Need to change "UUID": unique_id to "id": unique_id
+

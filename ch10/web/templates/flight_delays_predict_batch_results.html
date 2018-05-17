@@ -1,0 +1,51 @@
+{% extends "layout.html" %}
+{% block body %}
+  <!-- Navigation guide -->
+  / <a href="/flights/delays/predict_batch/results/{{ iso_date }}">Flight Delay Prediction Results via Spark in Batch</a>
+
+  <p class="lead" style="margin: 10px; margin-left: 0px;">
+
+    Presenting Flight Delay Predictions via Spark in Batch
+  </p>
+
+  <!-- Generate table from prediction results -->
+  <table class="table">
+      <thead>
+        <tr>
+            <td>Request Timestamp</td>
+            <td>Carrier</td>
+            <td>Flight Date</td>
+            <td>Origin</td>
+            <td>Destination</td>
+            <td>Distance</td>
+            <td>Departure Delay</td>
+            <td><span style="color: red;">Predicted Arrival Delay</span></td>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in predictions %}
+            <tr>
+                <td>{{ item['Timestamp'] }}</td>
+                <td>{{ item['Carrier'] }}</td>
+                <td>{{ item['FlightDate'] }}</td>
+                <td>{{ item['Origin'] }}</td>
+                <td>{{ item['Dest'] }}</td>
+                <td>{{ item['Distance'] }}</td>
+                <td>{{ item['DepDelay'] }}</td>
+                <td>
+                    <span style="color: red;">
+                        {% if item['Prediction'] == 0.0 %}
+                            On Time (0-15 Minute Delay)
+                        {% elif item['Prediction'] == 1.0 %}
+                            Slightly Late (15-60 Minute Delay)
+                        {% elif item['Prediction'] == 2.0 %}
+                            Very Late (60+ Minute Delay)
+                        {% endif %}
+                    </span>
+                </td>
+            </tr>
+        {% endfor %}
+      </tbody>
+  </table>
+
+{% endblock %}

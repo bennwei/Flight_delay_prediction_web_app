@@ -1,0 +1,56 @@
+{% extends "layout.html" %}
+{% block body %}
+  <div>
+    <!-- Navigation guide -->
+    / <a href="/flights/search">Flights</a> / <a href="/flights/search">Search</a>
+
+    <p class="lead">{{flight_count}} Flights</p>
+    <form action="/flights/search" method="get">
+      <label for="Carrier">Carrier</label>
+      <input name="Carrier" maxlength="3" style="width: 36px; margin-right: 10px;" value="{{carrier if carrier else ''}}"></input>
+      <label for="Origin">Origin</label>
+      <input name="Origin" maxlength="3" style="width: 36px; margin-right: 10px;" value="{{origin if origin else ''}}"></input>
+      <label for="Dest">Dest</label>
+      <input name="Dest" maxlength="3" style="width: 36px; margin-right: 10px;" value="{{dest if dest else ''}}"></input>
+      <label for="FlightDate">FlightDate</label>
+      <input name="FlightDate" style="width: 100px; margin-right: 10px;" value="{{flight_date if flight_date else ''}}"></input>
+      <label for="TailNum">TailNum</label>
+      <input name="TailNum" style="width: 100px; margin-right: 10px;" value="{{tail_number if tail_number else ''}}"></input>
+      <label for="FlightNum">FlightNum</label>
+      <input name="FlightNum" style="width: 50px; margin-right: 10px;" value="{{flight_number if flight_number else ''}}"></input>
+      <button type="submit" class="btn btn-xs btn-default" style="height: 25px">Submit</button>
+    </form>
+    <table class="table table-condensed table-striped">
+      <thead>
+        <th>Airline</th>
+        <th>Flight Number</th>
+        <th>Origin</th>
+        <th>Destination</th>
+        <th>Date</th>
+        <th>Departure Time</th>
+        <th>Tail Number</th>
+        <th>Air Time</th>
+        <th>Distance</th>
+      </thead>
+      <tbody>
+        {% for flight in flights %}
+        <tr>
+          <td><a href="/airline/{{flight.Carrier}}">{{flight.Carrier}}</a></td>
+          <td><a href="/on_time_performance?Carrier={{flight.Carrier}}&FlightDate={{flight.FlightDate}}&FlightNum={{flight.FlightNum}}">{{flight.FlightNum}}</a></td>
+          <td>{{flight.Origin}}</td>
+          <td>{{flight.Dest}}</td>
+          <td>{{flight.FlightDate}}</td>
+          <td>{{flight.DepTime}}</td>
+          <td><a href="/airplane/{{flight.TailNum}}">{{flight.TailNum}}</a></td>
+          <td>{{flight.AirTime}}</td>
+          <td>{{flight.Distance}}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% import "macros.jnj" as common %}
+  {% if nav_offsets and nav_path -%}
+    {{ common.display_nav(nav_offsets, nav_path, flight_count)|safe }}
+  {% endif -%}
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+{% block body %}
+  <div>
+    <!-- Navigation guide -->
+    / Flights / <a href="/on_time_performance?Carrier={{flight.Carrier}}&FlightDate={{flight.FlightDate}}&FlightNum={{flight.FlightNum}}">{{flight.TailNum}}</a>
+
+    <p class="lead">Flight {{flight.FlightNum}}</p>
+    <table class="table">
+      <thead>
+        <th>Airline</th>
+        <th>Origin</th>
+        <th>Destination</th>
+        <th>Tail Number</th>
+        <th>Date</th>
+        <th>Air Time</th>
+        <th>Distance</th>
+      </thead>
+      <tbody>
+        <tr>
+          <td><a href="/airline/{{flight.Carrier}}">{{flight.Carrier}}</a></td>
+          <td>{{flight.Origin}}</td>
+          <td>{{flight.Dest}}</td>
+          <td><a href="/airplane/flights/{{flight.TailNum}}">{{flight.TailNum}}</a></td>
+          <td>{{flight.FlightDate}}</td>
+          <td>{{flight.AirTime}}</td>
+          <td>{{flight.Distance}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

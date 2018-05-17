@@ -1,0 +1,49 @@
+{% extends "layout.html" %}
+{% block body %}
+  <!-- Navigation guide -->
+  / <a href="/flights/delays/predict_batch">Flight Delay Prediction via Spark in Batch</a>
+
+  <p class="lead" style="margin: 10px; margin-left: 0px;">
+    <!-- Airline Name and website-->
+    Predicting Flight Delays via Spark in Batch
+  </p>
+
+  <!-- Generate form from search_config and request args -->
+  <form id="flight_delay_classification" action="/flights/delays/predict/classify" method="post">
+    {% for item in form_config %}
+      {% if 'label' in item %}
+        <label for="{{item['field']}}">{{item['label']}}</label>
+      {% else %}
+        <label for="{{item['field']}}">{{item['field']}}</label>
+      {% endif %}
+        <input name="{{item['field']}}" style="width: 36px; margin-right: 10px;" value=""></input>
+    {% endfor %}
+    <button type="submit" class="btn btn-xs btn-default" style="height: 25px">Submit</button>
+  </form>
+
+  <div style="margin-top: 10px;">
+      <p>Prediction Request Successful: <span id="result" style="display: inline-block;"></span></p>
+  </div>
+
+  <script>
+    // Attach a submit handler to the form
+    $( "#flight_delay_classification" ).submit(function( event ) {
+
+      // Stop form from submitting normally
+      event.preventDefault();
+
+      // Get some values from elements on the page:
+      var $form = $( this ),
+        term = $form.find( "input[name='s']" ).val(),
+        url = $form.attr( "action" );
+
+      // Send the data using post
+      var posting = $.post( url, $( "#flight_delay_classification" ).serialize() );
+
+      // Put the results in a div
+      posting.done(function( data ) {
+        $( "#result" ).empty().append( data );
+      });
+    });
+  </script>
+{% endblock %}
